@@ -1,0 +1,3573 @@
+QARZ — ОБЪЯСНЕНИЕ ПРОЕКТА ДЛЯ ЗАЩИТЫ
+Дата проверки: 3 октября 2026 года
+
+Все пути ниже указаны относительно папки superproject.
+В конце файла приведён полный итоговый код каждого файла, изменённого или
+добавленного при подготовке к защите. Сам этот TXT повторно туда не включён.
+
+СОДЕРЖАНИЕ
+1. Краткий рассказ о проекте и структура папок
+2. Модели: поля, связи и методы
+3. Формы: данные, проверки и сохранение
+4. Представления: CBV и переопределённые методы
+5. Запросы к базе данных
+6. Все маршруты
+7. Шаблоны, CSS и JavaScript
+8. Примеры прохождения запроса
+9. Языки, авторизация и служебные файлы
+10. Что изменено и что намеренно оставлено
+11. Проверки и ограничения
+12. Вопросы учителя и короткие ответы
+13. Полный итоговый код изменённых файлов
+
+1. КРАТКИЙ РАССКАЗ О ПРОЕКТЕ
+
+Qarz — сайт для учёта долгов покупателей небольшого магазина. Владелец
+регистрирует магазин, добавляет клиентов и кассиров. Владелец и активные кассиры
+записывают долги, сроки возврата и полученные платежи. Сайт рассчитывает остатки
+и показывает просрочку. Покупателю владелец может создать отдельную учётную
+запись: она позволяет смотреть только свои долги и платежи.
+
+Это именно учёт платежей, а не банковская система: сайт сам не списывает деньги
+с карты. Сохранность базы обеспечивается отдельными резервными копиями.
+Гостю доступна информационная главная страница, вход, регистрация и восстановление
+пароля. Внутренние функции требуют входа и подходящей роли.
+
+Короткое вступление на защите:
+«Мой проект помогает магазину вести учёт продаж в долг. Здесь есть три роли:
+владелец, кассир и покупатель. Django обрабатывает запросы, формы проверяют данные,
+модели сохраняют их в SQLite, а шаблоны показывают результат. Пользователи видят
+только данные своего магазина, покупатели — только собственные долги».
+
+Структура:
+- manage.py — запуск команд Django: сервер, тесты, проверки, миграции.
+- server/settings.py — база, приложения, middleware, языки, почта, авторизация.
+- server/urls.py — корневые маршруты: /admin/ и подключение main/urls.py.
+- server/asgi.py и server/wsgi.py — точки запуска приложения сервером.
+- main/models.py — семь моделей и финансовые правила.
+- main/forms.py — семь форм моделей/аккаунтов и DateFilterForm для фильтра даты.
+- main/views.py — обработка страниц и действий, проверки ролей.
+- main/urls.py — маршруты приложения.
+- main/utils.py — определение магазина пользователя.
+- main/activity.py — перевод записей истории, включая старые записи.
+- main/error_views.py — страницы ошибок 403, 404, 500 и CSRF.
+- main/middleware.py — выбор языка по умолчанию.
+- main/i18n_messages.py — строки для перевода стандартных сообщений Django.
+- main/admin.py — регистрация моделей в административной панели.
+- main/apps.py — конфигурация приложения MainConfig.
+- main/migrations/ — история изменений схемы; существующие миграции не удалены.
+- main/management/commands/backup_db.py — команда резервного копирования SQLite.
+- main/templates/main/ — страницы, общие HTML-фрагменты и шаблоны письма.
+- main/static/main/css/style.css — оформление и мобильная версия.
+- main/static/main/js/theme.js — тема, подтверждения, помощь при оплате, навигация.
+- main/tests.py — 20 существовавших тестов.
+- main/test_refactoring.py — 13 проверок упрощения, навигации и обработки ошибок.
+- locale/ — переводы en, ru, tg; README.md объясняет обновление каталогов.
+- db.sqlite3 — рабочая база; тесты используют отдельную тестовую базу.
+- backups/ — резервные копии, не исходный код.
+- .venv/ — окружение Python, не исходный код приложения.
+
+2. МОДЕЛИ — main/models.py
+
+Общие понятия:
+Каждая модель соответствует таблице. Django автоматически добавляет первичный
+ключ id; pk — универсальное имя первичного ключа. CharField хранит короткую
+строку, TextField — длинный текст, BooleanField — да/нет, DecimalField — точное
+десятичное число. auto_now_add записывает время при создании.
+blank=True разрешает пустое значение в форме, null=True — NULL в базе.
+ForeignKey означает «много записей ссылаются на одну», OneToOneField — «один к одному».
+related_name задаёт имя обратной связи, например customer.debts.all().
+CASCADE удаляет связанные записи при удалении родителя, PROTECT препятствует
+удалению используемой записи, SET_NULL сохраняет запись и очищает ссылку.
+Это правила ORM; пользовательские страницы дополнительно ограничивают операции.
+
+User(AbstractUser) — учётная запись.
+- role: owner, cashier или client; по умолчанию owner.
+- Role(TextChoices): допустимые значения и переводимые подписи ролей.
+- От AbstractUser получены username, хеш password, email, first_name, last_name,
+  is_active, is_staff, is_superuser, last_login, date_joined, groups, user_permissions.
+- username уникален. Email в формах обязателен, но уникальность email здесь не задана.
+- is_staff разрешает вход в Django admin; роль owner сама по себе этого не делает.
+- is_active у User — глобальная активность аккаунта. Не путать с Employee.is_active.
+
+Shop — магазин.
+- owner: единственный владелец, связь один-к-одному с User, обратное имя user.shop.
+- name: название до 150 символов; address: необязательный адрес до 255;
+  phone: телефон до 50 символов (blank=False в текущем коде).
+  Это изменение автора уже было до последнего форматирования; соответствующей
+  миграции пока нет. OwnerRegisterForm по-прежнему разрешает пустой phone и
+  ограничивает ввод 30 символами; эта несогласованность не менялась задачей оформления.
+- __str__ возвращает название магазина.
+- При удалении владельца действует CASCADE, но связанные защищённые финансовые
+  записи могут препятствовать удалению всей цепочки. Обычный сайт владельца не удаляет.
+
+Employee — связь кассира с магазином.
+- shop: магазин; shop.employees — его сотрудники.
+- user: один аккаунт кассира; user.employee — связь с магазином.
+- is_active: разрешено ли кассиру работать с магазином.
+- __str__ возвращает username кассира.
+- Отключение сотрудника не удаляет аккаунт, принятые платежи и историю.
+
+Customer — карточка покупателя, не обязательно имеющего аккаунт.
+- shop: магазин, которому принадлежит карточка; shop.customers — список клиентов.
+- user: необязательный аккаунт покупателя, один-к-одному. При удалении аккаунта
+  карточка сохраняется благодаря SET_NULL; user.customer — обратная связь.
+- name: имя до 150; phone: обязательный телефон до 30 символов.
+- address: необязательный адрес до 255; note: необязательное примечание.
+- is_archived: находится ли карточка в архиве; created_at: время создания.
+- total_debt: сумма amount всех неотменённых долгов клиента.
+- total_paid: сумма платежей по неотменённым долгам.
+- remaining_debt: total_debt минус total_paid.
+- Эти три свойства вычисляются запросами, а не хранятся отдельными столбцами.
+- __str__ возвращает имя клиента.
+
+Debt — один долг.
+- customer: покупатель. PROTECT не позволяет удалить покупателя с долгами.
+- amount: сумма в TJS, максимум 12 цифр всего, 2 после точки; минимум 0.01.
+- description: необязательное описание; due_date: необязательная дата возврата.
+- created_by: кто записал долг; PROTECT сохраняет ссылку на автора.
+- created_at: время создания.
+- status: unpaid, partial, paid или cancelled; начальное значение unpaid.
+- Status(TextChoices) хранит варианты статуса. get_status_display() Django
+  создаёт автоматически: он возвращает переводимую подпись вместо машинного кода.
+- paid_amount суммирует платежи по долгу.
+- remaining_amount возвращает остаток; для отменённого долга — 0, ниже 0 не опускается.
+- is_overdue: дата задана, она раньше сегодняшней местной даты, статус unpaid/partial.
+  Сегодняшний срок ещё не просрочен. Оплаченные и отменённые долги не просрочены.
+- clean(): нельзя уменьшить сумму ниже уже оплаченной; нельзя отменить долг с платежами.
+  Пустая сумма обрабатывается как ошибка поля, а не сравнивается с числом.
+- refresh_status(): без платежей unpaid, при частичной оплате partial, при полной paid.
+  cancelled сохраняется. update(status=...) не вызывает save() повторно, избегая рекурсии.
+- save(): в транзакции блокирует запись существующего долга записью прежнего id,
+  выполняет full_clean(), обычное сохранение и пересчёт статуса.
+- __str__ показывает имя покупателя и сумму.
+
+Payment — один зарегистрированный платёж по долгу.
+- debt: долг; debt.payments — его платежи. При настоящем удалении долга CASCADE
+  удалит платежи, но пользовательский интерфейс предлагает отмену, а не удаление долга.
+- amount: сумма с теми же точностью и минимумом, что у долга.
+- accepted_by: принявший платёж пользователь, PROTECT.
+- created_at: время создания.
+- clean(): запрещает оплату отменённого долга и сумму выше оставшегося долга.
+  При редактировании исключает текущий платёж из суммы остальных платежей.
+- save(): в транзакции получает блокировку через запись прежнего id долга,
+  заново читает долг, проверяет и сохраняет платёж, пересчитывает статус.
+  Если существующий платёж перенесли на другой долг, обновляет также старый долг.
+  В обычном интерфейсе переноса нет, но модель используется и в Django admin.
+- __str__ показывает сумму платежа и покупателя.
+- refresh_deleted_payment_debt(): функция-получатель сигнала post_delete.
+  После удаления платежа находит существующий долг и обновляет статус.
+  Работает при payment.delete() и при Payment.objects.filter(...).delete().
+  Отдельный Payment.delete() больше не нужен: раньше он повторял ту же работу.
+
+ActionLog — запись истории действий магазина.
+- shop: чей журнал; user: автор, допускает NULL и SET_NULL при удалении автора.
+- action: постоянный идентификатор сообщения, например Customer created: %(name)s.
+- details: JSON со значениями для подстановки, например {"name": "Али"}.
+- created_at: время записи; Meta.ordering = ["-created_at"] — новые сверху.
+- display_action вызывает main.activity.render_action и возвращает перевод сообщения.
+- __str__ возвращает display_action как строку.
+- Имена покупателей не переводятся, шаблон сообщения переводится при показе.
+
+3. ФОРМЫ — main/forms.py
+
+ModelForm строит поля по модели; Meta.model указывает модель, Meta.fields — только
+разрешённые пользователю поля. labels меняет подписи, widgets — HTML-вид элементов.
+is_valid() заполняет cleaned_data и errors. Данные POST нельзя считать проверенными
+до is_valid(). Проверка ModelForm включает подходящие проверки модели.
+UserCreationForm тоже является ModelForm: дополнительно проверяет пароли и сохраняет
+их хеш. Поэтому формы аккаунтов не заменены обычными ручными формами.
+
+DateFilterForm(forms.Form):
+- Одно необязательное поле date. Принимает строку даты из GET-фильтра.
+- is_valid() проверяет дату; cleaned_data["date"] содержит date или None.
+- Не сохраняет модель: это только проверка поискового условия.
+- Позволяет обойтись без try/except в DebtListView; неправильная граница
+  пропускается, при этом другая правильная граница продолжает работать.
+
+CustomerForm(ModelForm):
+- Принимает name, phone, address, note; проверяет обязательность и длины модели.
+- phone выглядит как tel, note — textarea; специальной проверки формата номера нет.
+- Сохраняет Customer. Магазин назначает CustomerCreateView, а не поле из браузера.
+
+PaymentForm(ModelForm):
+- Принимает debt и amount, сохраняет Payment.
+- Проверяет выбранный долг, формат/точность/минимум суммы и правила Payment.clean().
+- PaymentCreateView ограничивает список своими открытыми долгами и назначает accepted_by.
+- Атрибуты min и step удобны для браузера, но основные проверки выполняет сервер.
+
+DebtCreateForm(ModelForm):
+- Принимает customer, amount, description, due_date; сохраняет Debt.
+- Проверяет клиента из разрешённого queryset, сумму, дату и ограничения модели.
+- Виджет даты: type="date", format="%Y-%m-%d". Это формат значения календарного поля,
+  независимо от того, как браузер рисует дату пользователю.
+- В представлении выбираются только неархивные клиенты своего магазина.
+- created_by устанавливается на сервере, статус рассчитывается моделью.
+
+DebtUpdateForm(DebtCreateForm):
+- Наследует модель, подписи и виджеты, но оставляет amount, description, due_date.
+- Нельзя поменять покупателя через редактирование долга.
+- Проверка модели запрещает уменьшить сумму ниже полученных платежей.
+
+OwnerRegisterForm(UserCreationForm):
+- username, email, password1, password2 — аккаунт; shop_name, phone, address — магазин.
+- Email обязателен и проверяется как email; пароли совпадают и проходят валидаторы
+  из server/settings.py; username проверяется на уникальность.
+- save() назначает OWNER. При commit=True сохраняет User и создаёт Shop в транзакции.
+- commit=False возвращает несохранённого User; Shop при этом не создаётся.
+
+CashierCreateForm(UserCreationForm):
+- Принимает username, email, password1, password2 с теми же базовыми проверками.
+- __init__ получает shop от представления, не из пользовательского поля.
+- save() назначает CASHIER и при commit=True создаёт User и Employee в транзакции.
+- commit=False не создаёт ни User, ни Employee.
+
+ClientAccountForm(UserCreationForm):
+- Принимает username, email, password1, password2; __init__ получает customer.
+- save() назначает CLIENT. При commit=True повторно читает Customer и проверяет,
+  что аккаунта ещё нет, затем сохраняет User и ссылку customer.user в транзакции.
+- Если аккаунт уже появился, выбрасывает ValidationError вместо замены связи.
+- commit=False теперь действительно ничего не записывает, только возвращает User
+  с ролью и хешем пароля. Если позднее просто вызвать user.save(), это не привяжет
+  покупателя: для полного штатного создания используется form.save().
+
+Также используются встроенные формы Django:
+- AuthenticationForm внутри LoginView: username/password, проверка учётных данных.
+- PasswordResetForm: email, формирование письма с временной ссылкой.
+- SetPasswordForm: new_password1/new_password2, проверка и установка нового пароля.
+- DeleteView использует пустую форму подтверждения; здесь её успешная отправка
+  переключает архивный флаг, а не удаляет объект.
+- DateFilterForm в DebtListView нужен только для проверки GET-фильтров дат;
+  отдельную модель или запись он не создаёт.
+
+4. ПРЕДСТАВЛЕНИЯ — main/views.py
+
+CBV — представление в виде класса. as_view() превращает класс в обработчик URL.
+dispatch() выбирает get()/post(); перед этим наши mixin проверяют доступ.
+ListView показывает список, DetailView — одну запись, CreateView — создание,
+UpdateView — изменение, DeleteView — подтверждение удаления/нашего архивирования,
+TemplateView — страницу, FormView — форму с собственной процедурой сохранения.
+View используется для простых POST-действий, где отдельная HTML-форма модели не нужна.
+
+Основные параметры:
+model — модель; form_class — форма; template_name — шаблон;
+context_object_name — имя данных в шаблоне; paginate_by — размер страницы;
+extra_context — дополнительные подписи; success_url — переход после успеха.
+super() вызывает стандартное поведение родительского класса, а не копирует его код.
+
+Проверки доступа:
+- ShopAccessMixin(LoginRequiredMixin): allowed_roles = OWNER/CASHIER.
+  dispatch() отправляет гостя на вход с next, проверяет роль, определяет self.shop
+  через get_user_shop(), при отсутствии доступа возвращает 403.
+  log_action() создаёт ActionLog с магазином, текущим пользователем и деталями.
+- OwnerAccessMixin(ShopAccessMixin): меняет только allowed_roles на OWNER.
+  Повторный dispatch удалён — остальная проверка наследуется без изменения правил.
+- ClientAccessMixin(LoginRequiredMixin): dispatch() требует CLIENT и связанную
+  карточку Customer; сохраняет её в self.customer. Чужая роль получает 403.
+
+Далее перечислены ВСЕ классы страниц и их собственные методы.
+
+HomeView(TemplateView), home.html:
+- dispatch(): покупателя после входа перенаправляет в client_debt_list.
+- get_context_data(): гостю оставляет публичную страницу; владельцу/кассиру добавляет
+  shop, customer_count, active_debt_count, total_debt, total_paid, remaining_debt,
+  payment_percent и recent_actions. Без доступного магазина финансовые данные нулевые.
+- Считает неотменённые долги, поступления по ним и последние 10 действий магазина.
+
+UserLoginView(LoginView), login.html:
+- get_success_url(): сначала безопасный next через встроенный get_redirect_url();
+  иначе CLIENT — в my-debts, остальные — на home.
+- redirect_authenticated_user не показывает форму входа уже вошедшему пользователю.
+
+UserLogoutView(LogoutView):
+- Своих методов нет. Встроенный POST завершает сессию, next_page ведёт на home.
+
+UserRegisterView(CreateView), OwnerRegisterForm, form_page.html:
+- dispatch(): уже вошедшего пользователя отправляет на home.
+- form_valid(): стандартное сохранение формы, затем login() нового владельца.
+- После регистрации открывается home с рабочей панелью.
+
+CustomerListView(ShopAccessMixin, ListView), customer_list.html:
+- get_queryset(): клиенты своего магазина; archived=1 выбирает архив, иначе активных;
+  q ищет по имени ИЛИ телефону. select_related("user"), порядок от новых к старым.
+- Контекст customers, по 20 на странице.
+
+CustomerCreateView(ShopAccessMixin, CreateView), CustomerForm, form_page.html:
+- form_valid(): назначает shop, сохраняет клиента, пишет действие в журнал.
+- После успеха customer_list.
+
+CustomerDetailView(ShopAccessMixin, DetailView), customer_detail.html:
+- get_queryset(): только свой магазин, заранее загружает debts__payments.
+- Контекст customer: контакты, суммы, долги, примечание, действия владельца.
+
+CustomerUpdateView(ShopAccessMixin, UpdateView), CustomerForm, form_page.html:
+- get_queryset(): только свой магазин.
+- form_valid(): сохраняет изменения и журналирует их.
+- get_success_url(): возвращает на customer_detail изменённого клиента.
+
+CustomerDeleteView(OwnerAccessMixin, DeleteView), confirm_delete.html:
+- get_queryset(): только свой магазин.
+- form_valid(): переключает is_archived, сохраняет одно поле, пишет журнал,
+  перенаправляет на customer_list. Стандартное удаление НЕ вызывается.
+- Старые имя класса и URL с delete оставлены ради совместимости ссылок.
+
+DebtListView(ShopAccessMixin, ListView), debt_list.html:
+- get_queryset(): долги своего магазина, связанные customer/created_by,
+  новые сверху; q — имя клиента; status — активные, просроченные или точный статус;
+  from/to — границы due_date. Некорректный фильтр даты пропускается.
+- Контекст debts, по 20 записей.
+
+DebtCreateView(ShopAccessMixin, CreateView), DebtCreateForm, form_page.html:
+- get_form(): ограничивает поле customer своими неархивными клиентами.
+- get_initial(): по GET customer заранее выбирает только допустимого клиента.
+- form_valid(): назначает created_by, сохраняет и записывает историю.
+- get_success_url(): debt_detail нового долга.
+
+DebtDetailView(ShopAccessMixin, DetailView), debt_detail.html:
+- get_queryset(): только свой магазин, select_related(customer, created_by)
+  и prefetch_related(payments). Контекст debt.
+
+DebtUpdateView(ShopAccessMixin, UpdateView), DebtUpdateForm, form_page.html:
+- get_queryset(): свой магазин, отменённые долги исключены.
+- form_valid(): сохраняет изменения, пишет журнал.
+- get_success_url(): debt_detail изменённого долга.
+
+DebtCancelView(ShopAccessMixin, View):
+- post(): получает долг своего магазина; уже отменённый долг или долг с платежами
+  не отменяет, возвращает error.html с объяснением и HTTP 400 без уведомления messages.
+  Иначе сохраняет cancelled и журнал.
+- Возвращает на debt_detail. GET не изменяет данные и не поддерживается.
+
+PaymentListView(ShopAccessMixin, ListView), payment_list.html:
+- get_queryset(): платежи своего магазина, поиск q по имени покупателя, новые сверху,
+  select_related(debt__customer, accepted_by). Контекст payments, по 20 записей.
+
+PaymentCreateView(ShopAccessMixin, CreateView), PaymentForm, form_page.html:
+- get_form(): поле debt содержит свои долги, кроме paid/cancelled.
+- get_initial(): GET debt заранее выбирает только доступный незакрытый долг.
+- form_valid(): назначает accepted_by, сохраняет платёж и журнал в транзакции;
+  ValidationError показывает в форме; OperationalError показывает сообщение о занятой БД.
+- get_context_data(): создаёт простой словарь debt_balances: строковый id → строковая
+  сумма остатка для JavaScript. Это подсказка, а не замена проверки Payment.clean().
+- get_success_url(): debt_detail оплачиваемого долга.
+
+EmployeeListView(OwnerAccessMixin, ListView), employee_list.html:
+- get_queryset(): сотрудники своего магазина вместе с user, q ищет по username.
+- Контекст employees; отдельной пагинации здесь нет.
+
+EmployeeCreateView(OwnerAccessMixin, FormView), CashierCreateForm, form_page.html:
+- get_form_kwargs(): передаёт shop в форму.
+- form_valid(): явно вызывает form.save(), журналирует кассира, затем стандартный
+  переход FormView на employee_list. FormView сам модель не сохраняет.
+
+EmployeeDeleteView(OwnerAccessMixin, View):
+- post(): только сотруднику своего магазина переключает is_active, сохраняет поле,
+  пишет журнал, возвращает employee_list. Несмотря на название, удаление не выполняется.
+
+ActionLogListView(OwnerAccessMixin, ListView), action_log_list.html:
+- get_queryset(): журнал своего магазина вместе с user; порядок задан в модели.
+- Контекст actions, по 30 записей.
+
+ClientDebtListView(ClientAccessMixin, ListView), debt_list.html:
+- get_queryset(): только долги self.customer, связанные customer/created_by/payments,
+  новые сверху. Контекст debts, по 20 записей. Фильтры сотрудника клиенту не показаны.
+
+ClientDebtDetailView(ClientAccessMixin, DetailView), debt_detail.html:
+- get_queryset(): только долги self.customer и их связи. Контекст debt.
+- Подстановка чужого pk приводит к 404, а не выдаёт чужой долг.
+
+ClientAccountCreateView(OwnerAccessMixin, FormView), ClientAccountForm, form_page.html:
+- get_form_kwargs(): находит своего клиента без аккаунта и передаёт customer в форму.
+- form_valid(): вызывает form.save(), выводит ValidationError в форме или выполняет
+  переход на customer_list без отдельного уведомления об успехе.
+
+Встроенные представления из main/urls.py, без наших переопределений методов:
+- PasswordResetView (FormView): форма email, письмо, переход на password_reset_done.
+- PasswordResetDoneView (TemplateView): нейтральное уведомление о письме.
+- PasswordResetConfirmView (FormView): проверка токена, форма нового пароля.
+- PasswordResetCompleteView (TemplateView): сообщение об успешной смене пароля.
+- Все четыре используют form_page.html и extra_context для подписей.
+- set_language — встроенная функция Django, сохраняет поддерживаемый язык в cookie.
+
+Функции из main/error_views.py:
+- permission_denied(request, exception=None): error.html с кодом 403.
+- not_found(request, exception=None): тот же шаблон с кодом 404.
+- server_error(request): код 500 и безопасное общее сообщение.
+- csrf_failure(request, reason=""): код 403, просьба обновить страницу и форму.
+Они используют render(), не CBV; короткие стандартные обработчики ошибок
+не нужно искусственно превращать в классы.
+
+5. ЗАПРОСЫ К БАЗЕ: КАК ОБЪЯСНЯТЬ ORM
+
+Model.objects — менеджер запросов. QuerySet — набор подходящих записей;
+обычно SQL выполняется при чтении результата, а не при построении цепочки.
+
+Примеры из реального кода:
+- Customer.objects.filter(shop=self.shop): берёт только клиентов текущего магазина.
+- Debt.objects.filter(customer__shop=self.shop): через связь customer доходит до shop.
+  Два подчёркивания обозначают переход по связи или условие сравнения.
+- exclude(status=Debt.Status.CANCELLED): убирает отменённые долги из расчёта.
+- filter(status__in=[...]): один из перечисленных статусов.
+- due_date__lt=today: раньше даты; __gte/__lte: не раньше/не позже границы.
+- Q(name__icontains=search) | Q(phone__icontains=search): поиск ИЛИ по двум полям.
+  icontains ищет подстроку без учёта регистра там, где это поддерживает используемая БД.
+- aggregate(total=Sum("amount"))["total"]: считает общую сумму в БД и возвращает число.
+  Для пустого набора используется Decimal("0.00") вместо None.
+- Sum("payments__amount"): суммирует суммы платежей через обратную связь долга.
+- Payment.objects.filter(debt__in=debts): платежи только по выбранным долгам.
+- .count(): количество; .exists(): есть ли хотя бы одна запись;
+  .first(): первая запись или None; .get(): ровно одна запись или исключение.
+- get_object_or_404(...): если подходящего объекта нет, возвращает HTTP 404.
+- .order_by("-created_at"): от новых к старым; [:10]: не больше десяти записей.
+- select_related("customer", "created_by"): загружает одиночные связи вместе с записью.
+- prefetch_related("payments"): отдельным запросом загружает набор связанных объектов.
+  Важно: aggregate() всё равно выполняет собственный запрос; prefetch не отменяет
+  все запросы свойств сумм в этой версии. Оптимизация больших списков — отдельная задача.
+- values_list("debt_id", flat=True).first(): читает только старый id долга платежа.
+- objects.create(...): создаёт и сохраняет запись. Используется для магазина,
+  сотрудника и журнала, а также фикстур тестов.
+- form.save(): создаёт/меняет объект модели после проверки формы.
+- instance.save(update_fields=["is_archived"]): меняет только архивный флаг.
+- .update(status=...): прямое обновление; не вызывает save(), clean() и сигналы save.
+  Поэтому оно применено для уже вычисленного статуса, а не для обхода проверки платежа.
+- .update(id=тот_же_id): значение id не меняется; SQL-запись нужна для получения
+  блокировки перед повторным чтением долга и проверкой остатка. Импорт F не используется.
+- select_for_update() в ClientAccountForm: блокирует выбранного клиента на БД,
+  поддерживающих такую блокировку. SQLite этот конкретный механизм не поддерживает;
+  нельзя представлять его как универсальную гарантию от всех конкурентных запросов.
+- .delete(): реальное удаление ORM; в обычном интерфейсе вместо удаления клиентов
+  и сотрудников меняются флаги. Удаление Payment поддерживается, например, в admin.
+
+Почему Decimal, atomic и повторная проверка сохранены:
+Decimal не даёт ошибок двоичной дроби при денежных расчётах.
+transaction.atomic объединяет действия: при исключении внутри блока они откатываются.
+Данные могли измениться после открытия формы; потому Payment.save() читает долг
+ещё раз перед full_clean(). Блокировка записи долга уменьшает риск одновременного
+приёма платежей сверх остатка. SQLite может вернуть ошибку занятости базы;
+PaymentCreateView её сообщает пользователю. Это не обещание бесконечной нагрузки.
+
+6. МАРШРУТЫ
+
+Корень: server/urls.py подключает main.urls без префикса; /admin/ — Django admin.
+Ниже: путь → имя URL → обработчик (в main/views.py, если не указано другое).
+<pk> — целочисленный id записи. Имена нужны для reverse() и {% url %}.
+
+/ → home → HomeView
+/login/ → login → UserLoginView
+/logout/ → logout → UserLogoutView (POST)
+/register/ → register → UserRegisterView
+/language/ → set_language → django.views.i18n.set_language (POST)
+
+/customers/ → customer_list → CustomerListView
+/customers/add/ → customer_create → CustomerCreateView
+/customers/<pk>/ → customer_detail → CustomerDetailView
+/customers/<pk>/edit/ → customer_update → CustomerUpdateView
+/customers/<pk>/delete/ → customer_delete → CustomerDeleteView (архив/восстановление)
+/customers/<pk>/access/ → client_account_create → ClientAccountCreateView
+
+/debts/ → debt_list → DebtListView
+/debts/add/ → debt_create → DebtCreateView
+/debts/<pk>/ → debt_detail → DebtDetailView
+/debts/<pk>/edit/ → debt_update → DebtUpdateView
+/debts/<pk>/cancel/ → debt_cancel → DebtCancelView (POST)
+/payments/ → payment_list → PaymentListView
+/payments/add/ → payment_create → PaymentCreateView
+
+/employees/ → employee_list → EmployeeListView
+/employees/add/ → employee_create → EmployeeCreateView
+/employees/<pk>/delete/ → employee_delete → EmployeeDeleteView (POST, доступ)
+/actions/ → action_list → ActionLogListView
+/my-debts/ → client_debt_list → ClientDebtListView
+/my-debts/<pk>/ → client_debt_detail → ClientDebtDetailView
+
+/password/reset/ → password_reset → auth_views.PasswordResetView
+/password/reset/sent/ → password_reset_done → auth_views.PasswordResetDoneView
+/password/reset/<uidb64>/<token>/ → password_reset_confirm → auth_views.PasswordResetConfirmView
+/password/reset/complete/ → password_reset_complete → auth_views.PasswordResetCompleteView
+
+GET открывает страницу/форму, POST передаёт изменения. Параметры ?q=, ?status=,
+?from=, ?to=, ?archived=, ?page= не являются отдельными URL-маршрутами.
+Пути сотрудников, журнала, архивации и выдачи доступа — только владельцу.
+Маршруты клиентов, долгов и платежей — владельцу и активному кассиру.
+my-debts — только покупателю. Фильтрация по магазину выполняется на сервере,
+недостаточно просто скрыть ссылку в шаблоне.
+
+7. ШАБЛОНЫ — main/templates/main/
+
+base.html: общий каркас, title/content, CSS/JS, шапка, desktop/mobile-навигация,
+RU/EN/TJ, тема, профиль, вход/выход. Блок уведомлений messages удалён.
+История находится сразу после
+сотрудников в меню владельца. На телефоне шесть пунктов расположены в два ряда.
+Получает user и request через стандартные context processors из server/settings.py.
+
+home.html: для гостя описание проекта, аудитория, возможности, шаги и регистрация;
+для вошедшего владельца/кассира — shop, суммы, счётчики и recent_actions.
+
+login.html: form от LoginView и next. Показывает ошибки входа, два поля, ссылки
+на регистрацию/восстановление. Данные POST отправляются на тот же адрес.
+
+form_page.html: общий экран регистрации, создания и редактирования,
+создания аккаунтов и восстановления пароля. Получает form, page_title, back_url,
+иногда object, notice, submit_label, validlink, payment_form и debt_balances.
+Показывает сообщение вместо формы, если это шаг восстановления без полей.
+
+_form.html: csrf_token, общие ошибки формы и цикл по полям.
+_field.html: одно field — label, виджет, help_text, ошибки. Используется и _form,
+и страницей входа. help_text|safe допустим для доверенных подсказок форм Django;
+так нельзя выводить произвольный пользовательский HTML.
+_pagination.html: is_paginated/page_obj; предыдущая/следующая страница и номер.
+Тег querystring сохраняет существующие фильтры при изменении page.
+
+customer_list.html: customers, request.GET; фильтр архива, поиск, таблица сумм.
+customer_detail.html: customer; контакты, total_debt/total_paid/remaining_debt,
+customer.debts.all, note, создание долга и действия владельца.
+confirm_delete.html: object; подтверждение архивации/восстановления клиента,
+долги и платежи сохраняются.
+debt_list.html: debts, user, request.GET; суммы, сроки, статусы и пагинация.
+Для CLIENT ссылки ведут на client_debt_detail, управляющие кнопки скрыты.
+debt_detail.html: debt и user; описание, срок, суммы, debt.payments.all;
+сотруднику доступны разрешённые действия, покупателю — просмотр.
+payment_list.html: payments и request.GET; клиент, сумма, кассир, время.
+employee_list.html: employees и request.GET; имя, роль, активность и POST-кнопка
+отключения/включения с подтверждением.
+action_log_list.html: actions; display_action, username или System, дата.
+error.html: page_title и explanation; понятное сообщение и ссылка на главную.
+password_reset_email.txt: email-контекст Django, protocol/domain/uid/token;
+переводимый текст и ссылка для восстановления.
+password_reset_subject.txt: переводимая тема письма.
+
+Основные конструкции шаблона:
+extends наследует каркас; block заменяет участок каркаса; include вставляет фрагмент;
+if выбирает ветку; for перебирает записи; empty показывает пустое состояние;
+url собирает адрес по имени; translate переводит строку; csrf_token защищает POST;
+floatformat:2 форматирует деньги, date форматирует даты, default задаёт замену.
+HTML-экранирование по умолчанию не позволяет имени клиента стать исполняемым HTML.
+
+В CSS обновлена навигация: убрана отдельная полоса управления, мобильное меню
+владельца расположено в два ряда. JavaScript и остальные компоненты сохранены.
+theme.js меняет светлую/тёмную тему и localStorage, обрабатывает data-confirm,
+читает debt-balances, подставляет полную сумму и подсвечивает пункт навигации.
+json_script безопасно передаёт словарь в JSON-блок, а не вставляет его в JS-код.
+Без JavaScript основные серверные формы и проверки всё равно работают.
+
+8. ПУТЬ ЗАПРОСА НА ПРИМЕРАХ
+
+Просмотр долга:
+GET /debts/5/ → server/urls.py → main/urls.py → DebtDetailView.as_view()
+→ ShopAccessMixin.dispatch() проверяет вход/роль/магазин
+→ get_queryset() ограничивает записи магазином → поиск pk=5
+→ контекст debt → debt_detail.html внутри base.html → HTML, HTTP 200.
+Чужой/несуществующий долг: 404. Гость: перенаправление на /login/?next=/debts/5/.
+
+Добавление долга:
+GET /debts/add/?customer=3 → DebtCreateView → get_initial()/get_form()
+→ DebtCreateForm с доступным клиентом → form_page.html.
+POST на тот же адрес → проверка CSRF → form.is_valid() → form_valid()
+→ form.instance.created_by → form.save() → Debt.save()/full_clean()/refresh_status()
+→ ActionLog → redirect на debt_detail. Ошибки: та же форма с сообщениями, без создания.
+
+Платёж:
+POST /payments/add/ с debt=5, amount=40 → PaymentCreateView
+→ PaymentForm проверяет разрешённый долг и сумму → form_valid() назначает accepted_by
+→ транзакция → Payment.save() повторно читает долг и проверяет остаток
+→ запись Payment → Debt.refresh_status() → ActionLog → redirect /debts/5/.
+Долг 100, оплата 40: статус partial, остаток 60. Ещё 60: paid, остаток 0.
+Попытка заплатить 61 при остатке 60 показывает ошибку и не создаёт платёж.
+
+Регистрация:
+GET /register/ → OwnerRegisterForm → form_page.html.
+POST → проверка полей/пароля → OwnerRegisterForm.save()
+→ User с хешем пароля + Shop → login() создаёт авторизованную сессию
+→ redirect / → HomeView показывает рабочую панель.
+
+Вход с возвратом:
+Гость открывает защищённую страницу → LoginRequiredMixin добавляет next
+→ LoginView проверяет пароль → get_success_url() проверяет безопасность next
+→ возвращает на нужную страницу. Внешний произвольный домен не принимается.
+Роль и принадлежность объекта проверяются заново на целевой странице.
+
+Архивирование:
+GET /customers/3/delete/ → CustomerDeleteView → confirm_delete.html.
+POST → проверка владельца → is_archived меняется на противоположное значение
+→ сохраняется флаг и журнал → /customers/. Долги не удаляются.
+
+Смена языка:
+POST /language/ с language=tg и next=/debts/ → set_language
+→ cookie django_language=tg → redirect → LocaleMiddleware активирует таджикский
+→ тот же view и шаблон, но переводимые строки отображаются на выбранном языке.
+
+9. ЯЗЫКИ И СЛУЖЕБНЫЕ ЧАСТИ
+
+В server/settings.py LANGUAGE_CODE='en': английский по умолчанию по пожеланию автора.
+В исходных строках Python/HTML используется английский. RU — код ru, EN — en,
+надпись TJ в переключателе соответствует языковому коду tg (таджикский, кириллица).
+gettext_lazy откладывает перевод подписи до использования в нужном языке запроса.
+DefaultLanguageMiddleware.__init__ сохраняет следующий обработчик, __call__ при
+отсутствующей/неподдерживаемой cookie задаёт язык по умолчанию вместо языка браузера.
+LocaleMiddleware применяет язык; cookie сохраняется на год и работает на всех страницах.
+
+main/activity.py: MESSAGES — известные сообщения; LEGACY_PREFIXES — старые варианты.
+render_action(action, details) переводит шаблон и подставляет значения, распознаёт
+исторические записи. Неизвестный формат оставляет читаемым. Совместимость не удалена.
+locale/en хранит также старые соответствия с русского для истории. Согласно
+locale/README.md его нельзя бездумно перегенерировать вместе с ru/tg.
+main/i18n_messages.py отмечает стандартные строки для извлечения переводов;
+это не ненужный код и не бизнес-обработчик запроса.
+
+main/utils.py/get_user_shop(user): гостю — None; владельцу — user.shop;
+кассиру — employee.shop только при employee.is_active; остальным — None.
+
+main/admin.py/CustomUserAdmin: наследует UserAdmin, добавляет role к полям
+просмотра/создания пользователя. Остальные шесть моделей зарегистрированы стандартно.
+Административные права Django и роли приложения — разные механизмы.
+
+main/management/commands/backup_db.py/Command:
+- add_arguments() принимает путь destination.
+- handle() проверяет SQLite, существование исходной базы и отсутствие файла назначения;
+  создаёт файл с правами 0600 и использует sqlite3.Connection.backup().
+- При ошибке сообщает CommandError; существующую копию не перезаписывает.
+Пример из корня: .venv/bin/python manage.py backup_db backups/before-defense.sqlite3
+Перед запуском выберите ещё не существующее имя. При этой доработке команда не нужна:
+рабочая схема и рабочие данные не менялись.
+
+10. ЧТО УПРОЩЕНО
+
+Последнее оформление по просьбе автора:
+- Обычные комментарии и строки документации убраны из рабочего Python-кода,
+  комментарии также убраны из HTML, CSS и JavaScript.
+- Объявления полей в main/models.py записаны в одну строку, включая ForeignKey.
+- Служебные заголовки исторических миграций не менялись, зависимости не редактировались.
+- Сравнение синтаксических деревьев Python подтвердило сохранение исполняемой логики.
+- Правка Shop.phone, уже присутствовавшая перед оформлением, сохранена без изменений.
+
+
+Упрощение уведомлений и обработки ошибок:
+- Убраны вызовы django.contrib.messages в views.py и блок уведомлений в base.html.
+- Для запрета отмены долга используется существующий error.html с кодом 400.
+- Проверка дат выполняется через DateFilterForm.is_valid() без try/except.
+- Try/except при сохранении Payment и аккаунта клиента пока сохранены: они
+  превращают ошибку повторной проверки/занятости базы в ошибку формы вместо 500.
+- Общий механизм django.contrib.messages остаётся в конфигурации, поскольку
+  стандартная Django admin использует его. На страницах приложения он не выводится.
+- from django.views import View нужен двум POST-обработчикам: DebtCancelView и
+  EmployeeDeleteView. Это стандартный базовый класс Django, а не отдельная страница.
+  ListView/CreateView здесь не подходят: действия отменяют долг или переключают
+  доступ, а не показывают список и не создают запись. Импорт не является лишним.
+
+
+Последующее изменение по просьбе автора:
+- CSV-экспорт и страница настроек магазина полностью убраны: URL, обработчики,
+  форма настроек, ссылки, блок экспорта на главной и неиспользуемые переводы.
+- /export/ и /settings/ теперь возвращают 404; данные магазина остаются в базе.
+- История перемещена сразу после сотрудников в основную и мобильную навигацию.
+- Отдельная полоса управления и её устаревшие CSS-правила удалены.
+- server/settings.py остаётся: это обязательная конфигурация Django, не страница сайта.
+
+
+- В forms.py и urls.py вместо import * перечислены реальные зависимости.
+  В views.py удалён неиспользуемый импорт Shop и упорядочены остальные.
+- OwnerAccessMixin больше не повторяет проверку входа/роли: задаёт allowed_roles,
+  а общая проверка остаётся в существующем ShopAccessMixin.
+- Убрано повторное обновление статуса из Payment.delete(); сохранён единый post_delete.
+- Поиск платежей/сотрудников, просрочка, процент оплаты и словарь остатков расписаны
+  понятными if/for вместо коротких вложенных выражений.
+- Длинные запросы, формы и настройки маршрутов разбиты на строки.
+  По последней просьбе автора все объявления полей моделей записаны в одну строку.
+- Предварительный выбор клиента/долга разбит на проверку id и отдельный запрос.
+- Переключение доступа сотрудника сохраняет только is_active.
+- Исправлены обработка пустой суммы долга и save(commit=False) формы клиента.
+- HTML-шаблоны отформатированы с отступом 4 пробела. Общие поля вынесены
+  в _field.html. Ранее добавленные комментарии удалены по просьбе автора.
+- Сохранены base.html, _form.html, _pagination.html; не созданы ненужные уровни
+  наследования или универсальные фабрики представлений.
+- Добавлены main/test_refactoring.py и этот файл.
+
+Что оставлено и почему:
+- Все семь моделей, поля, связи и роли; схема БД ради краткости не менялась.
+- CBV уже подходили задаче: сохранены, а не заменены ручной обработкой GET/POST.
+- UserCreationForm нужен для надёжной проверки и хеширования пароля.
+- Atomic, блокировка, full_clean и проверка остатка защищают денежные записи.
+- Проверки queryset в каждом view явно показывают, какие записи разрешены;
+  их не спрятали в сложной «универсальной» абстракции.
+- Поддержка старых записей журнала нужна для существующих данных.
+- Логика theme.js, письма и миграции не менялись. Из theme.js удалён только комментарий.
+  CSS меню и неиспользуемые переводы обновлены при последующем удалении функций.
+- Длинные HTML-атрибуты с условиями сохранены цельными там, где перенос мог бы
+  усложнить чтение Django-тегов. Переводимые строки не разорваны на части.
+- Названия CustomerDeleteView/EmployeeDeleteView и URL delete исторические;
+  поведение объяснено в этом файле, ссылки не сломаны переименованием.
+
+11. ПРОВЕРКА И ОГРАНИЧЕНИЯ
+
+Запущено в существующем .venv:
+1) .venv/bin/python manage.py check — ошибок нет.
+2) .venv/bin/python manage.py makemigrations --check --dry-run — сейчас обнаруживает
+   изменение Shop.phone и предлагает 0009_alter_shop_phone.py. Оно уже существовало
+   до удаления комментариев; миграция в рамках форматирования не создавалась.
+   Ранее, до этого изменения автора, проверка сообщала No changes detected.
+3) .venv/bin/python manage.py test --verbosity 1 — 33 теста, OK.
+4) .venv/bin/python manage.py compilemessages --ignore=.venv — каталоги пересобраны.
+
+Новые тесты проверяют:
+- commit=False без записи и обычное создание клиентского аккаунта;
+- запрет замены уже связанного аккаунта;
+- пустую, нечисловую, отрицательную и нулевую сумму долга;
+- пересчёт долга после одиночного удаления платежа;
+- запрет кассиру страниц владельца;
+- next при входе на страницу владельца;
+- поля, CSRF и ошибки общей формы входа на трёх языках;
+- пропуск неправильных GET-фильтров даты;
+- невозможность добавить долг архивному клиенту;
+- удалённые страницы отвечают 404 на GET и POST, ссылок на них больше нет;
+- история идёт сразу после сотрудников в обоих меню на трёх языках,
+  активный пункт выделяется, кассир и покупатель не видят меню владельца;
+- отмена долга с платежами возвращает понятную страницу 400 без потери записей;
+- правильная граница даты действует, даже если другая граница ошибочна.
+
+Существующие тесты дополнительно покрывают страницы, календарное поле, оплату сверх
+остатка, массовое удаление платежей, архив, изоляцию магазинов/клиентов, отключение
+кассира, регистрацию, вход/выход, безопасный next, языки, письма восстановления,
+историю действий, CSRF переключения языка и страницу 404.
+
+При предыдущей подготовке к защите, до удаления функций, выполнено сравнение
+HTML до/после форматирования:
+18 страниц/состояний (гость и владелец) на каждом из трёх языков, всего 54 сравнения.
+Структура HTML и текст совпали после нормализации пробелов и случайного CSRF-токена.
+Это была проверка серверного HTML, не визуальный тест в настоящем мобильном браузере.
+После последующих изменений действуют 33 теста; прежние 54 сравнения
+не утверждают неизменность намеренно обновлённой навигации и публичной страницы.
+
+Честные ограничения для защиты:
+- Учебный режим DEBUG включён по умолчанию; перед публичным размещением нужны
+  отдельный секрет DJANGO_SECRET_KEY, DEBUG=0, корректные хосты, HTTPS и production-настройки.
+- Почта по умолчанию console: ссылка выводится сервером, а не доставляется в почтовый
+  ящик. SMTP настраивается переменными окружения; реальная доставка здесь не проверялась.
+- Наличие тестов не доказывает отсутствие всех ошибок и гонок. Одновременная большая
+  нагрузка на SQLite отдельно не тестировалась. Не нужно обещать учителю обратное.
+- Рендеринг HTML проверен автоматически; ручная пиксельная проверка всех экранов
+  и всех мобильных браузеров в этой доработке не проводилась.
+- Свойства сумм выполняют запросы; для очень больших списков возможна будущая
+  оптимизация. Сейчас приоритет — ясный код и сохранение существующего поведения.
+
+12. ВОЗМОЖНЫЕ ВОПРОСЫ УЧИТЕЛЯ
+
+Что делает Django?
+Принимает запрос, находит view по URL, работает с формами/моделями и возвращает ответ.
+
+Чем модель отличается от формы?
+Модель описывает данные и правила хранения; форма принимает и проверяет пользовательский ввод.
+
+Почему CBV?
+Список, карточка, создание и изменение — типовые задачи. CBV уже умеют их выполнять,
+а я переопределяю только необходимые методы: например, фильтрацию по магазину.
+
+Что означает (ShopAccessMixin, ListView)?
+Сначала применяется проверка доступа из mixin, затем стандартное поведение списка.
+
+Где проверяются права, если пользователь вручную ввёл чужой URL?
+В dispatch() проверяется роль, в get_queryset() — магазин или конкретный покупатель.
+
+Почему не достаточно спрятать кнопку?
+Запрос можно отправить напрямую; сервер обязан самостоятельно проверить права и данные.
+
+Чем form_valid отличается от is_valid?
+is_valid() проверяет форму. form_valid() — метод view, который Django вызывает после успеха проверки.
+
+Почему FormView сам не создаёт кассира?
+FormView отвечает за цикл формы и переход. В EmployeeCreateView.form_valid() явно вызывается save().
+
+Зачем get_form_kwargs?
+Чтобы передать в форму дополнительные серверные данные, например свой магазин или клиента.
+
+Зачем get_initial и get_form одновременно?
+Первый задаёт предварительный выбор, второй ограничивает разрешённые значения поля.
+
+Что делает commit=False?
+Возвращает подготовленный объект без записи. Это позволяет назначить роль или другое поле
+до сохранения. Дополнительные связанные записи такие формы тоже не создают без commit=True.
+
+Где пароль? Можно ли его прочитать?
+В User.password хранится хеш, а не исходный пароль. UserCreationForm вызывает штатную
+процедуру установки пароля; для проверки используется check_password().
+
+Почему сумма Decimal, а не float?
+Для точного десятичного счёта денег и двух знаков после точки.
+
+Можно ли заплатить больше остатка, убрав min/max в браузере?
+Нет, Payment.clean() повторно проверяется сервером при сохранении.
+
+Почему расчёт статуса не только во view?
+Модель используется не только сайтом, но и админкой/кодом; правило должно действовать там тоже.
+
+Что делает full_clean?
+Проверяет поля, clean() модели и предусмотренные Django проверки уникальности/ограничений.
+Обычный Model.save() сам это не вызывает; Debt и Payment вызывают явно.
+
+Что такое транзакция?
+Группа записей, которая завершается целиком или откатывается при ошибке внутри блока.
+
+Почему осталась странная запись прежнего id?
+Это получение блокировки перед проверкой денежных данных на SQLite; id не меняется.
+Простое select_for_update на SQLite не даёт такой блокировки. F не используется.
+
+Почему убран Payment.delete?
+Тот же пересчёт уже выполняет post_delete, в том числе при массовом удалении.
+
+Почему DeleteView не удаляет клиента?
+Чтобы не потерять финансовую историю. Я переопределил form_valid и меняю только is_archived.
+
+Что значит related_name="debts"?
+Можно получить долги покупателя через customer.debts вместо стандартного debt_set.
+
+Что различает Customer и User?
+Customer — запись о покупателе магазина. User — учётная запись для входа.
+Карточка покупателя может существовать без аккаунта.
+
+Почему фильтруем customer__shop, а не просто debt.pk?
+pk определяет запись, но не разрешение её смотреть; фильтр по магазину обеспечивает изоляцию.
+
+В чём разница 403 и 404?
+403 — доступ запрещён по роли; 404 — подходящей записи в разрешённом наборе нет.
+
+Что такое CSRF?
+Защита от отправки изменяющего запроса с чужого сайта от имени вошедшего пользователя.
+
+Зачем next?
+Чтобы после входа вернуться на запрошенную страницу. Django проверяет безопасность адреса.
+
+Почему смена языка не меняет имя клиента?
+Переводятся подписи интерфейса; пользовательские имена и заметки — данные, а не ключи перевода.
+
+Почему в коде tg, а в кнопке TJ?
+tg — языковой код таджикского; TJ — выбранная короткая надпись переключателя.
+
+Зачем reverse_lazy в атрибутах класса?
+Он откладывает построение URL до использования, когда маршруты уже загружены.
+В выполняющемся методе можно использовать обычный reverse().
+
+Что делают select_related и prefetch_related?
+Помогают заранее получить связанные записи. Первый подходит одиночным связям,
+второй — коллекциям. Они не заменяют сами правила доступа и проверки.
+
+Чем миграция отличается от записи клиента?
+Миграция меняет структуру базы, а создание клиента добавляет строку в существующую таблицу.
+В этой доработке структура базы не менялась.
+
+Что бы ты улучшил дальше?
+Отдельно проверил бы конкурентную нагрузку, оптимизировал запросы больших списков,
+настроил реальную почту и безопасное развёртывание. Это отдельные задачи, а не
+причина убирать существующие проверки ради короткого кода.
+
+13. ПОЛНЫЙ ИТОГОВЫЙ КОД ИЗМЕНЁННЫХ ФАЙЛОВ
+
+Ниже будут размещены исходники без сокращений. Старые файлы, которые не менялись
+при этой подготовке к защите, описаны выше, но повторно не копируются.
+
+========================================================================
+ФАЙЛ: main/models.py
+========================================================================
+
+from decimal import Decimal
+
+from django.conf import settings
+from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
+from django.db import models, transaction
+from django.db.models import Sum
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
+
+class User(AbstractUser):
+    class Role(models.TextChoices):
+        OWNER = "owner", _("Owner")
+        CASHIER = "cashier", _("Cashier")
+        CLIENT = "client", _("Customer")
+
+    role = models.CharField(max_length=10, choices=Role.choices, default=Role.OWNER)
+
+
+class Shop(models.Model):
+    owner = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="shop")
+    name = models.CharField(max_length=150)
+    address = models.CharField(max_length=255, blank=True)
+    phone = models.CharField( max_length=50)
+
+    def __str__(self):
+        return self.name
+
+
+class Employee(models.Model):
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="employees")
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="employee")
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.user.username
+
+
+class Customer(models.Model):
+    is_archived = models.BooleanField(default=False)
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="customers")
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="customer")
+    name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=30)
+    address = models.CharField(max_length=255, blank=True)
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def total_debt(self):
+        result = self.debts.exclude(status=Debt.Status.CANCELLED).aggregate(total=Sum("amount"))
+
+        return result["total"] or Decimal("0.00")
+
+    @property
+    def total_paid(self):
+        result = self.debts.exclude(status=Debt.Status.CANCELLED).aggregate(total=Sum("payments__amount"))
+
+        return result["total"] or Decimal("0.00")
+
+    @property
+    def remaining_debt(self):
+        return self.total_debt - self.total_paid
+
+    def __str__(self):
+        return self.name
+
+
+class Debt(models.Model):
+    class Status(models.TextChoices):
+        UNPAID = "unpaid", _("Unpaid")
+        PARTIAL = "partial", _("Partially paid")
+        PAID = "paid", _("Paid")
+        CANCELLED = "cancelled", _("Cancelled")
+
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name="debts")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
+    description = models.TextField(blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="created_debts")
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.UNPAID)
+
+    @property
+    def paid_amount(self):
+        result = self.payments.aggregate(total=Sum("amount"))
+        return result["total"] or Decimal("0.00")
+
+    @property
+    def remaining_amount(self):
+        if self.status == self.Status.CANCELLED:
+            return Decimal("0.00")
+        return max(self.amount - self.paid_amount, Decimal("0.00"))
+
+    @property
+    def is_overdue(self):
+        if not self.due_date:
+            return False
+        if self.status not in (self.Status.UNPAID, self.Status.PARTIAL):
+            return False
+        return self.due_date < timezone.localdate()
+
+    def clean(self):
+        if self.pk and self.amount is not None and self.amount < self.paid_amount:
+            raise ValidationError({
+                "amount": _("The debt amount cannot be less than the payments already received.")
+            })
+
+        if self.status == self.Status.CANCELLED and self.pk and self.payments.exists():
+            raise ValidationError({"status": _("A debt with payments cannot be cancelled.")})
+
+    def refresh_status(self):
+        if self.status == self.Status.CANCELLED:
+            return
+
+        paid = self.paid_amount
+
+        if paid == 0:
+            new_status = self.Status.UNPAID
+        elif paid < self.amount:
+            new_status = self.Status.PARTIAL
+        else:
+            new_status = self.Status.PAID
+
+        if self.status != new_status:
+            Debt.objects.filter(pk=self.pk).update(status=new_status)
+            self.status = new_status
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        if self.pk:
+            Debt.objects.filter(pk=self.pk).update(id=self.pk)
+        self.full_clean()
+        super().save(*args, **kwargs)
+        self.refresh_status()
+
+    def __str__(self):
+        return f"{self.customer.name} — {self.amount} TJS"
+
+
+class Payment(models.Model):
+    debt = models.ForeignKey(Debt, on_delete=models.CASCADE, related_name="payments")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
+    accepted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="accepted_payments")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        if not self.debt_id:
+            return
+
+        if self.debt.status == Debt.Status.CANCELLED:
+            raise ValidationError(_("Payments cannot be accepted for a cancelled debt."))
+
+        payments = self.debt.payments.all()
+
+        if self.pk:
+            payments = payments.exclude(pk=self.pk)
+
+        already_paid = payments.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+
+        remaining = self.debt.amount - already_paid
+
+        if self.amount and self.amount > remaining:
+            raise ValidationError({"amount": _("The payment cannot exceed the outstanding balance.")})
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        Debt.objects.filter(pk=self.debt_id).update(id=self.debt_id)
+        self.debt = Debt.objects.get(pk=self.debt_id)
+        old_debt_id = None
+
+        if self.pk:
+            old_debt_id = Payment.objects.filter(pk=self.pk).values_list("debt_id", flat=True).first()
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+        self.debt.refresh_status()
+
+        if old_debt_id and old_debt_id != self.debt_id:
+            Debt.objects.get(pk=old_debt_id).refresh_status()
+
+    def __str__(self):
+        return f"{self.amount} TJS — {self.debt.customer.name}"
+
+
+@receiver(post_delete, sender=Payment)
+def refresh_deleted_payment_debt(sender, instance, **kwargs):
+    debt = Debt.objects.filter(pk=instance.debt_id).first()
+    if debt:
+        debt.refresh_status()
+
+
+class ActionLog(models.Model):
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="actions")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="actions")
+    action = models.TextField()
+    details = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    @property
+    def display_action(self):
+        from .activity import render_action
+
+        return render_action(self.action, self.details)
+
+    def __str__(self):
+        return str(self.display_action)
+
+КОНЕЦ ФАЙЛА: main/models.py
+
+========================================================================
+ФАЙЛ: main/forms.py
+========================================================================
+
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.db import transaction
+from django.utils.translation import gettext_lazy as _
+
+from .models import Customer, Debt, Employee, Payment, Shop, User
+
+
+class DateFilterForm(forms.Form):
+    date = forms.DateField(required=False)
+
+
+class CustomerForm(forms.ModelForm):
+    class Meta:
+        model = Customer
+        fields = ["name", "phone", "address", "note"]
+        labels = {
+            "name": _("Name"), "phone": _("Phone"),
+            "address": _("Address"), "note": _("Note"),
+        }
+        widgets = {
+            "note": forms.Textarea(attrs={"rows": 3}),
+            "phone": forms.TextInput(attrs={"type": "tel"}),
+        }
+
+
+class PaymentForm(forms.ModelForm):
+    class Meta:
+        model = Payment
+        fields = ["debt", "amount"]
+        labels = {"debt": _("Debt"), "amount": _("Payment amount")}
+        widgets = {"amount": forms.NumberInput(attrs={"step": "0.01", "min": "0.01"})}
+
+
+class ClientAccountForm(UserCreationForm):
+    email = forms.EmailField(label=_("Email address"), required=True)
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password1", "password2"]
+
+    def __init__(self, *args, customer, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.customer = customer
+
+    @transaction.atomic
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.role = User.Role.CLIENT
+        if not commit:
+            return user
+
+        customer = Customer.objects.select_for_update().get(pk=self.customer.pk)
+        if customer.user_id:
+            raise forms.ValidationError(_("This customer already has an account."))
+        user.save()
+        customer.user = user
+        customer.save(update_fields=["user"])
+        return user
+
+
+class DebtCreateForm(forms.ModelForm):
+    class Meta:
+        model = Debt
+        fields = ["customer", "amount", "description", "due_date"]
+        labels = {
+            "customer": _("Customer"),
+            "amount": _("Amount"),
+            "description": _("Description"),
+            "due_date": _("Due date"),
+        }
+        widgets = {
+            "amount": forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "placeholder": "0.00"}),
+            "description": forms.Textarea(attrs={"rows": 4, "placeholder": _("What is this debt for?")}),
+            "due_date": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+        }
+
+
+class DebtUpdateForm(DebtCreateForm):
+    class Meta(DebtCreateForm.Meta):
+        fields = ["amount", "description", "due_date"]
+
+
+class OwnerRegisterForm(UserCreationForm):
+    shop_name = forms.CharField(label=_("Shop name"), max_length=150)
+    email = forms.EmailField(label=_("Email address"), required=True)
+    phone = forms.CharField(label=_("Phone"), max_length=30, required=False)
+    address = forms.CharField(label=_("Address"), max_length=255, required=False)
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "shop_name", "phone", "address", "password1", "password2"]
+
+    @transaction.atomic
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.role = User.Role.OWNER
+
+        if commit:
+            user.save()
+            Shop.objects.create(
+                owner=user,
+                name=self.cleaned_data["shop_name"],
+                phone=self.cleaned_data["phone"],
+                address=self.cleaned_data["address"],
+            )
+
+        return user
+
+
+class CashierCreateForm(UserCreationForm):
+    email = forms.EmailField(label=_("Email address"), required=True)
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password1", "password2"]
+
+    def __init__(self, *args, shop=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.shop = shop
+
+    @transaction.atomic
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.role = User.Role.CASHIER
+
+        if commit:
+            user.save()
+            Employee.objects.create(shop=self.shop, user=user)
+
+        return user
+
+КОНЕЦ ФАЙЛА: main/forms.py
+
+========================================================================
+ФАЙЛ: main/views.py
+========================================================================
+
+from decimal import Decimal
+
+from django.contrib.auth import login
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView, LogoutView
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import OperationalError, transaction
+from django.db.models import Q, Sum
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from django.views import View
+from django.views.generic import (
+    CreateView, DeleteView, DetailView, FormView, ListView, TemplateView, UpdateView,
+)
+
+from .forms import (
+    CashierCreateForm,
+    ClientAccountForm,
+    CustomerForm,
+    DateFilterForm,
+    DebtCreateForm,
+    DebtUpdateForm,
+    OwnerRegisterForm,
+    PaymentForm,
+)
+from .models import ActionLog, Customer, Debt, Employee, Payment, User
+from .utils import get_user_shop
+
+
+class ShopAccessMixin(LoginRequiredMixin):
+    allowed_roles = (User.Role.OWNER, User.Role.CASHIER)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+
+        if request.user.role not in self.allowed_roles:
+            raise PermissionDenied
+
+        self.shop = get_user_shop(request.user)
+
+        if not self.shop:
+            raise PermissionDenied
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def log_action(self, action, details=None):
+        ActionLog.objects.create(
+            shop=self.shop,
+            user=self.request.user,
+            action=action,
+            details=details or {},
+        )
+
+
+class OwnerAccessMixin(ShopAccessMixin):
+    allowed_roles = (User.Role.OWNER,)
+
+
+class ClientAccessMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+
+        if request.user.role != User.Role.CLIENT:
+            raise PermissionDenied
+
+        self.customer = getattr(request.user, "customer", None)
+
+        if not self.customer:
+            raise PermissionDenied
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+class HomeView(TemplateView):
+    template_name = "main/home.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.role == User.Role.CLIENT:
+            return redirect("client_debt_list")
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if not self.request.user.is_authenticated:
+            return context
+
+        shop = get_user_shop(self.request.user)
+        context["shop"] = shop
+        context["customer_count"] = 0
+        context["active_debt_count"] = 0
+        context["total_debt"] = Decimal("0.00")
+        context["total_paid"] = Decimal("0.00")
+        context["remaining_debt"] = Decimal("0.00")
+        context["payment_percent"] = Decimal("0.0")
+        context["recent_actions"] = []
+
+        if not shop:
+            return context
+
+        debts = Debt.objects.filter(customer__shop=shop).exclude(status=Debt.Status.CANCELLED)
+        total_debt = debts.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        payments = Payment.objects.filter(debt__in=debts)
+        total_paid = payments.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+
+        context["customer_count"] = shop.customers.filter(is_archived=False).count()
+        context["active_debt_count"] = debts.filter(status__in=[Debt.Status.UNPAID, Debt.Status.PARTIAL]).count()
+        context["total_debt"] = total_debt
+        context["total_paid"] = total_paid
+        context["remaining_debt"] = total_debt - total_paid
+        if total_debt:
+            context["payment_percent"] = round(total_paid * 100 / total_debt, 1)
+        context["recent_actions"] = ActionLog.objects.filter(shop=shop).select_related("user")[:10]
+
+        return context
+
+
+class UserLoginView(LoginView):
+    template_name = "main/login.html"
+    redirect_authenticated_user = True
+    next_page = reverse_lazy("home")
+
+    def get_success_url(self):
+        next_url = self.get_redirect_url()
+        if next_url:
+            return next_url
+        if self.request.user.role == User.Role.CLIENT:
+            return reverse("client_debt_list")
+
+        return super().get_success_url()
+
+
+class UserLogoutView(LogoutView):
+    next_page = reverse_lazy("home")
+
+
+class UserRegisterView(CreateView):
+    form_class = OwnerRegisterForm
+    template_name = "main/form_page.html"
+    extra_context = {"page_title": _("Register your shop"), "back_url": "home", "submit_label": _("Sign up")}
+    success_url = reverse_lazy("home")
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect("home")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        login(self.request, self.object)
+        return response
+
+
+class CustomerListView(ShopAccessMixin, ListView):
+    model = Customer
+    template_name = "main/customer_list.html"
+    context_object_name = "customers"
+    paginate_by = 20
+
+    def get_queryset(self):
+        show_archived = self.request.GET.get("archived") == "1"
+        queryset = Customer.objects.filter(
+            shop=self.shop, is_archived=show_archived
+        ).select_related("user")
+        search = self.request.GET.get("q")
+
+        if search:
+            queryset = queryset.filter(Q(name__icontains=search) | Q(phone__icontains=search))
+
+        return queryset.order_by("-created_at")
+
+
+class CustomerCreateView(ShopAccessMixin, CreateView):
+    model = Customer
+    form_class = CustomerForm
+    template_name = "main/form_page.html"
+    extra_context = {"page_title": _("Customer"), "back_url": "customer_list"}
+    success_url = reverse_lazy("customer_list")
+
+    def form_valid(self, form):
+        form.instance.shop = self.shop
+        response = super().form_valid(form)
+        self.log_action("Customer created: %(name)s", {"name": self.object.name})
+        return response
+
+
+class CustomerDetailView(ShopAccessMixin, DetailView):
+    model = Customer
+    template_name = "main/customer_detail.html"
+    context_object_name = "customer"
+
+    def get_queryset(self):
+        return Customer.objects.filter(shop=self.shop).prefetch_related("debts__payments")
+
+
+class CustomerUpdateView(ShopAccessMixin, UpdateView):
+    model = Customer
+    form_class = CustomerForm
+    template_name = "main/form_page.html"
+    extra_context = {"page_title": _("Customer"), "back_url": "customer_list"}
+
+    def get_queryset(self):
+        return Customer.objects.filter(shop=self.shop)
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self.log_action("Customer updated: %(name)s", {"name": self.object.name})
+        return response
+
+    def get_success_url(self):
+        return reverse("customer_detail", kwargs={"pk": self.object.pk})
+
+
+class CustomerDeleteView(OwnerAccessMixin, DeleteView):
+    model = Customer
+    template_name = "main/confirm_delete.html"
+    success_url = reverse_lazy("customer_list")
+
+    def get_queryset(self):
+        return Customer.objects.filter(shop=self.shop)
+
+    def form_valid(self, form):
+        self.object.is_archived = not self.object.is_archived
+        self.object.save(update_fields=["is_archived"])
+        self.log_action("Customer archive status changed: %(name)s", {"name": self.object.name})
+        return redirect(self.success_url)
+
+
+class DebtListView(ShopAccessMixin, ListView):
+    model = Debt
+    template_name = "main/debt_list.html"
+    context_object_name = "debts"
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Debt.objects.filter(customer__shop=self.shop)
+        queryset = queryset.select_related("customer", "created_by").order_by("-created_at")
+        search = self.request.GET.get("q", "").strip()
+        if search:
+            queryset = queryset.filter(customer__name__icontains=search)
+        status = self.request.GET.get("status")
+        if status == "overdue":
+            queryset = queryset.filter(
+                due_date__lt=timezone.localdate(),
+                status__in=[Debt.Status.UNPAID, Debt.Status.PARTIAL],
+            )
+        elif status == "active":
+            queryset = queryset.filter(status__in=[Debt.Status.UNPAID, Debt.Status.PARTIAL])
+        elif status in Debt.Status.values:
+            queryset = queryset.filter(status=status)
+        for parameter, lookup in (("from", "due_date__gte"), ("to", "due_date__lte")):
+            date_form = DateFilterForm({"date": self.request.GET.get(parameter)})
+            if date_form.is_valid() and date_form.cleaned_data["date"]:
+                queryset = queryset.filter(**{lookup: date_form.cleaned_data["date"]})
+        return queryset
+
+
+class DebtCreateView(ShopAccessMixin, CreateView):
+    model = Debt
+    form_class = DebtCreateForm
+    template_name = "main/form_page.html"
+    extra_context = {"page_title": _("Debt"), "back_url": "debt_list"}
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields["customer"].queryset = Customer.objects.filter(shop=self.shop, is_archived=False)
+        return form
+
+    def get_initial(self):
+        initial = super().get_initial()
+        customer_id = self.request.GET.get("customer")
+
+        if customer_id and customer_id.isdecimal():
+            customers = Customer.objects.filter(shop=self.shop, is_archived=False)
+            if customers.filter(pk=customer_id).exists():
+                initial["customer"] = customer_id
+
+        return initial
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        response = super().form_valid(form)
+        self.log_action(
+            "Debt created: %(amount)s TJS, customer: %(name)s",
+            {"amount": str(self.object.amount), "name": self.object.customer.name},
+        )
+        return response
+
+    def get_success_url(self):
+        return reverse("debt_detail", kwargs={"pk": self.object.pk})
+
+
+class DebtDetailView(ShopAccessMixin, DetailView):
+    model = Debt
+    template_name = "main/debt_detail.html"
+    context_object_name = "debt"
+
+    def get_queryset(self):
+        return Debt.objects.filter(customer__shop=self.shop).select_related(
+            "customer", "created_by"
+        ).prefetch_related("payments")
+
+
+class DebtUpdateView(ShopAccessMixin, UpdateView):
+    model = Debt
+    form_class = DebtUpdateForm
+    template_name = "main/form_page.html"
+    extra_context = {"page_title": _("Debt"), "back_url": "debt_list"}
+
+    def get_queryset(self):
+        return Debt.objects.filter(customer__shop=self.shop).exclude(status=Debt.Status.CANCELLED)
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self.log_action("Debt updated: %(id)s", {"id": self.object.pk})
+        return response
+
+    def get_success_url(self):
+        return reverse("debt_detail", kwargs={"pk": self.object.pk})
+
+
+class DebtCancelView(ShopAccessMixin, View):
+    def post(self, request, pk):
+        debt = get_object_or_404(Debt, pk=pk, customer__shop=self.shop)
+
+        if debt.status == Debt.Status.CANCELLED or debt.payments.exists():
+            return render(request, "main/error.html", {
+                "page_title": _("Debt"),
+                "explanation": _("This debt cannot be cancelled."),
+            }, status=400)
+
+        debt.status = Debt.Status.CANCELLED
+        debt.save()
+        self.log_action("Debt cancelled: %(id)s", {"id": debt.pk})
+        return redirect("debt_detail", pk=debt.pk)
+
+
+class PaymentListView(ShopAccessMixin, ListView):
+    model = Payment
+    template_name = "main/payment_list.html"
+    context_object_name = "payments"
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Payment.objects.filter(debt__customer__shop=self.shop)
+        queryset = queryset.select_related("debt__customer", "accepted_by").order_by("-created_at")
+        search = self.request.GET.get("q", "").strip()
+        if search:
+            queryset = queryset.filter(debt__customer__name__icontains=search)
+        return queryset
+
+
+class PaymentCreateView(ShopAccessMixin, CreateView):
+    model = Payment
+    form_class = PaymentForm
+    template_name = "main/form_page.html"
+    extra_context = {"page_title": _("Accept payment"), "back_url": "payment_list", "payment_form": True}
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields["debt"].queryset = Debt.objects.filter(customer__shop=self.shop).exclude(
+            status__in=[Debt.Status.PAID, Debt.Status.CANCELLED]
+        )
+        return form
+
+    def get_initial(self):
+        initial = super().get_initial()
+        debt_id = self.request.GET.get("debt")
+
+        if debt_id and debt_id.isdecimal():
+            debts = Debt.objects.filter(customer__shop=self.shop).exclude(
+                status__in=[Debt.Status.PAID, Debt.Status.CANCELLED]
+            )
+            if debts.filter(pk=debt_id).exists():
+                initial["debt"] = debt_id
+
+        return initial
+
+    def form_valid(self, form):
+        form.instance.accepted_by = self.request.user
+        try:
+            with transaction.atomic():
+                response = super().form_valid(form)
+                self.log_action(
+                    "Payment received: %(amount)s TJS, customer: %(name)s",
+                    {"amount": str(self.object.amount), "name": self.object.debt.customer.name},
+                )
+            return response
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        except OperationalError:
+            form.add_error(None, _("The payment was not saved because the database is busy. Refresh the balance and try again."))
+        return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        balances = {}
+        for debt in context["form"].fields["debt"].queryset:
+            balances[str(debt.pk)] = str(debt.remaining_amount)
+        context["debt_balances"] = balances
+        return context
+
+    def get_success_url(self):
+        return reverse("debt_detail", kwargs={"pk": self.object.debt_id})
+
+
+class EmployeeListView(OwnerAccessMixin, ListView):
+    model = Employee
+    template_name = "main/employee_list.html"
+    context_object_name = "employees"
+
+    def get_queryset(self):
+        queryset = Employee.objects.filter(shop=self.shop).select_related("user")
+        search = self.request.GET.get("q", "").strip()
+        if search:
+            queryset = queryset.filter(user__username__icontains=search)
+        return queryset
+
+
+class EmployeeCreateView(OwnerAccessMixin, FormView):
+    form_class = CashierCreateForm
+    template_name = "main/form_page.html"
+    extra_context = {"page_title": _("New staff member"), "back_url": "employee_list"}
+    success_url = reverse_lazy("employee_list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["shop"] = self.shop
+        return kwargs
+
+    def form_valid(self, form):
+        user = form.save()
+        self.log_action("Cashier created: %(name)s", {"name": user.username})
+        return super().form_valid(form)
+
+
+class EmployeeDeleteView(OwnerAccessMixin, View):
+    def post(self, request, pk):
+        employee = get_object_or_404(Employee, pk=pk, shop=self.shop)
+        employee.is_active = not employee.is_active
+        employee.save(update_fields=["is_active"])
+        self.log_action("Cashier access changed: %(name)s", {"name": employee.user.username})
+        return redirect("employee_list")
+
+
+class ActionLogListView(OwnerAccessMixin, ListView):
+    model = ActionLog
+    template_name = "main/action_log_list.html"
+    context_object_name = "actions"
+    paginate_by = 30
+
+    def get_queryset(self):
+        return ActionLog.objects.filter(shop=self.shop).select_related("user")
+
+
+class ClientDebtListView(ClientAccessMixin, ListView):
+    model = Debt
+    template_name = "main/debt_list.html"
+    context_object_name = "debts"
+    paginate_by = 20
+
+    def get_queryset(self):
+        return Debt.objects.filter(customer=self.customer).select_related(
+            "customer", "created_by"
+        ).prefetch_related("payments").order_by("-created_at")
+
+
+class ClientDebtDetailView(ClientAccessMixin, DetailView):
+    model = Debt
+    template_name = "main/debt_detail.html"
+    context_object_name = "debt"
+
+    def get_queryset(self):
+        return Debt.objects.filter(customer=self.customer).select_related(
+            "customer", "created_by"
+        ).prefetch_related("payments")
+
+
+class ClientAccountCreateView(OwnerAccessMixin, FormView):
+    form_class = ClientAccountForm
+    template_name = "main/form_page.html"
+    extra_context = {"page_title": _("Customer access"), "back_url": "customer_list"}
+    success_url = reverse_lazy("customer_list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["customer"] = get_object_or_404(
+            Customer, pk=self.kwargs["pk"], shop=self.shop, user__isnull=True
+        )
+        return kwargs
+
+    def form_valid(self, form):
+        try:
+            form.save()
+        except ValidationError as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
+КОНЕЦ ФАЙЛА: main/views.py
+
+========================================================================
+ФАЙЛ: main/urls.py
+========================================================================
+
+from django.contrib.auth import views as auth_views
+from django.urls import path
+from django.utils.translation import gettext_lazy as _
+from django.views.i18n import set_language
+
+from .views import (
+    ActionLogListView,
+    ClientAccountCreateView,
+    ClientDebtDetailView,
+    ClientDebtListView,
+    CustomerCreateView,
+    CustomerDeleteView,
+    CustomerDetailView,
+    CustomerListView,
+    CustomerUpdateView,
+    DebtCancelView,
+    DebtCreateView,
+    DebtDetailView,
+    DebtListView,
+    DebtUpdateView,
+    EmployeeCreateView,
+    EmployeeDeleteView,
+    EmployeeListView,
+    HomeView,
+    PaymentCreateView,
+    PaymentListView,
+    UserLoginView,
+    UserLogoutView,
+    UserRegisterView,
+)
+
+
+urlpatterns = [
+    path('language/', set_language, name='set_language'),
+    path('customers/<int:pk>/access/', ClientAccountCreateView.as_view(), name='client_account_create'),
+    path(
+        'password/reset/',
+        auth_views.PasswordResetView.as_view(
+            template_name='main/form_page.html',
+            email_template_name='main/password_reset_email.txt',
+            subject_template_name='main/password_reset_subject.txt',
+            extra_context={'page_title': _('Reset password'), 'back_url': 'login'},
+        ),
+        name='password_reset',
+    ),
+    path(
+        'password/reset/sent/',
+        auth_views.PasswordResetDoneView.as_view(
+            template_name='main/form_page.html',
+            extra_context={
+                'page_title': _('Check your email'),
+                'notice': _('If an account with this email exists, you’ll receive a password reset link.'),
+                'back_url': 'login',
+            },
+        ),
+        name='password_reset_done',
+    ),
+    path(
+        'password/reset/<uidb64>/<token>/',
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name='main/form_page.html',
+            extra_context={'page_title': _('New password'), 'back_url': 'login'},
+        ),
+        name='password_reset_confirm',
+    ),
+    path(
+        'password/reset/complete/',
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name='main/form_page.html',
+            extra_context={
+                'page_title': _('Password changed'),
+                'notice': _('You can now log in with your new password.'),
+                'back_url': 'login',
+            },
+        ),
+        name='password_reset_complete',
+    ),
+    path('', HomeView.as_view(), name='home'),
+    path('login/', UserLoginView.as_view(), name='login'),
+    path('logout/', UserLogoutView.as_view(), name='logout'),
+    path('register/', UserRegisterView.as_view(), name='register'),
+    path('customers/', CustomerListView.as_view(), name='customer_list'),
+    path('customers/add/', CustomerCreateView.as_view(), name='customer_create'),
+    path('customers/<int:pk>/', CustomerDetailView.as_view(), name='customer_detail'),
+    path('customers/<int:pk>/edit/', CustomerUpdateView.as_view(), name='customer_update'),
+    path('customers/<int:pk>/delete/', CustomerDeleteView.as_view(), name='customer_delete'),
+    path('debts/', DebtListView.as_view(), name='debt_list'),
+    path('debts/add/', DebtCreateView.as_view(), name='debt_create'),
+    path('debts/<int:pk>/', DebtDetailView.as_view(), name='debt_detail'),
+    path('debts/<int:pk>/edit/', DebtUpdateView.as_view(), name='debt_update'),
+    path('debts/<int:pk>/cancel/', DebtCancelView.as_view(), name='debt_cancel'),
+    path('payments/', PaymentListView.as_view(), name='payment_list'),
+    path('payments/add/', PaymentCreateView.as_view(), name='payment_create'),
+    path('employees/', EmployeeListView.as_view(), name='employee_list'),
+    path('employees/add/', EmployeeCreateView.as_view(), name='employee_create'),
+    path('employees/<int:pk>/delete/', EmployeeDeleteView.as_view(), name='employee_delete'),
+    path('actions/', ActionLogListView.as_view(), name='action_list'),
+    path('my-debts/', ClientDebtListView.as_view(), name='client_debt_list'),
+    path('my-debts/<int:pk>/', ClientDebtDetailView.as_view(), name='client_debt_detail'),
+]
+
+КОНЕЦ ФАЙЛА: main/urls.py
+
+========================================================================
+ФАЙЛ: main/test_refactoring.py
+========================================================================
+
+import re
+from decimal import Decimal
+
+from django.core.exceptions import ValidationError
+from django.test import TestCase
+from django.urls import reverse
+
+from .forms import ClientAccountForm
+from .models import Customer, Debt, Employee, Payment, Shop, User
+
+
+class RefactoringTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner", role=User.Role.OWNER)
+        self.shop = Shop.objects.create(owner=self.owner, name="Test shop")
+        self.customer = Customer.objects.create(shop=self.shop, name="Customer", phone="123")
+        self.debt = Debt.objects.create(
+            customer=self.customer, amount="100.00", created_by=self.owner
+        )
+
+    def client_account_form(self):
+        return ClientAccountForm(
+            customer=self.customer,
+            data={
+                "username": "customer-account",
+                "email": "customer@example.test",
+                "password1": "Strong-Example-Password!2026",
+                "password2": "Strong-Example-Password!2026",
+            },
+        )
+
+    def test_client_account_commit_false_does_not_write(self):
+        form = self.client_account_form()
+        self.assertTrue(form.is_valid(), form.errors)
+
+        user = form.save(commit=False)
+
+        self.assertIsNone(user.pk)
+        self.assertEqual(user.role, User.Role.CLIENT)
+        self.assertTrue(user.check_password(form.cleaned_data["password1"]))
+        self.assertFalse(User.objects.filter(username="customer-account").exists())
+        self.customer.refresh_from_db()
+        self.assertIsNone(self.customer.user_id)
+
+        saved_user = form.save()
+        self.customer.refresh_from_db()
+        self.assertEqual(self.customer.user_id, saved_user.pk)
+
+    def test_client_account_does_not_replace_existing_account(self):
+        form = self.client_account_form()
+        self.assertTrue(form.is_valid(), form.errors)
+        existing_user = User.objects.create_user(username="existing", role=User.Role.CLIENT)
+        Customer.objects.filter(pk=self.customer.pk).update(user=existing_user)
+
+        with self.assertRaises(ValidationError):
+            form.save()
+
+        self.customer.refresh_from_db()
+        self.assertEqual(self.customer.user_id, existing_user.pk)
+        self.assertFalse(User.objects.filter(username="customer-account").exists())
+
+    def test_invalid_debt_amount_shows_form_errors(self):
+        self.client.force_login(self.owner)
+        for amount in ("", "not-a-number", "-1", "0"):
+            with self.subTest(amount=amount):
+                response = self.client.post(
+                    reverse("debt_update", args=[self.debt.pk]),
+                    {"amount": amount, "description": "", "due_date": ""},
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("amount", response.context["form"].errors)
+                self.debt.refresh_from_db()
+                self.assertEqual(self.debt.amount, Decimal("100.00"))
+
+    def test_deleting_one_payment_refreshes_status(self):
+        payment = Payment.objects.create(
+            debt=self.debt, amount="100", accepted_by=self.owner
+        )
+        self.debt.refresh_from_db()
+        self.assertEqual(self.debt.status, Debt.Status.PAID)
+
+        payment.delete()
+
+        self.debt.refresh_from_db()
+        self.assertEqual(self.debt.status, Debt.Status.UNPAID)
+        self.assertEqual(self.debt.remaining_amount, Decimal("100.00"))
+
+    def test_owner_only_pages_still_reject_cashier(self):
+        cashier = User.objects.create_user(username="cashier", role=User.Role.CASHIER)
+        Employee.objects.create(shop=self.shop, user=cashier)
+        self.client.force_login(cashier)
+
+        for route in ("employee_list", "employee_create", "action_list"):
+            with self.subTest(route=route):
+                self.assertEqual(self.client.get(reverse(route)).status_code, 403)
+        self.assertEqual(self.client.get(reverse("debt_list")).status_code, 200)
+
+    def test_guest_owner_page_keeps_next_url(self):
+        response = self.client.get(reverse("action_list"))
+        self.assertRedirects(response, reverse("login") + "?next=/actions/")
+
+    def test_removed_features_are_not_available(self):
+        for authenticated in (False, True):
+            if authenticated:
+                self.client.force_login(self.owner)
+            for url in ("/export/", "/settings/"):
+                with self.subTest(authenticated=authenticated, url=url):
+                    self.assertEqual(self.client.get(url).status_code, 404)
+                    self.assertEqual(self.client.post(url, {}).status_code, 404)
+            response = self.client.get(reverse("home"))
+            self.assertNotContains(response, 'href="/export/"')
+            self.assertNotContains(response, 'href="/settings/"')
+            self.assertNotContains(response, "CSV")
+
+    def test_history_follows_staff_in_desktop_and_mobile_navigation(self):
+        self.client.force_login(self.owner)
+        for language in ("en", "ru", "tg"):
+            self.client.cookies["django_language"] = language
+            response = self.client.get(reverse("action_list"))
+            html = response.content.decode()
+            for nav_class in ("desktop-nav", "mobile-nav owner-nav"):
+                with self.subTest(language=language, navigation=nav_class):
+                    navigation = re.search(
+                        rf'<nav class="{nav_class}"[^>]*>(.*?)</nav>', html, re.DOTALL
+                    ).group(1)
+                    links = re.findall(r'href="([^"]+)"', navigation)
+                    staff_index = links.index(reverse("employee_list"))
+                    self.assertEqual(links[staff_index + 1], reverse("action_list"))
+                    self.assertIn('href="/actions/" class="active"', navigation)
+
+        cashier = User.objects.create_user(username="navigation-cashier", role=User.Role.CASHIER)
+        Employee.objects.create(shop=self.shop, user=cashier)
+        customer_user = User.objects.create_user(username="navigation-client", role=User.Role.CLIENT)
+        self.customer.user = customer_user
+        self.customer.save(update_fields=["user"])
+        for user in (cashier, customer_user):
+            self.client.force_login(user)
+            response = self.client.get(reverse("home"), follow=True)
+            self.assertNotContains(response, 'href="/employees/"')
+            self.assertNotContains(response, 'href="/actions/"')
+
+    def test_shared_field_template_keeps_login_fields_and_errors(self):
+        for language in ("en", "ru", "tg"):
+            with self.subTest(language=language):
+                self.client.cookies["django_language"] = language
+                response = self.client.post(reverse("login"), {"username": "", "password": ""})
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'id="id_username"')
+                self.assertContains(response, 'id="id_password"')
+                self.assertContains(response, 'name="csrfmiddlewaretoken"')
+                self.assertContains(response, 'class="field-group has-error"', count=2)
+                self.assertTemplateUsed(response, "main/_field.html")
+
+    def test_invalid_date_filters_are_ignored(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse("debt_list"), {"from": "wrong", "to": "2026-02-30"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.debt, response.context["debts"])
+
+    def test_archived_customer_cannot_receive_new_debt(self):
+        self.customer.is_archived = True
+        self.customer.save(update_fields=["is_archived"])
+        self.client.force_login(self.owner)
+
+        response = self.client.post(reverse("debt_create"), {
+            "customer": self.customer.pk, "amount": "20", "description": "", "due_date": "",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("customer", response.context["form"].errors)
+        self.assertEqual(self.customer.debts.count(), 1)
+
+    def test_cancellation_with_payments_returns_error_without_notification(self):
+        Payment.objects.create(debt=self.debt, amount="20", accepted_by=self.owner)
+        self.client.force_login(self.owner)
+
+        response = self.client.post(reverse("debt_cancel", args=[self.debt.pk]))
+
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, "This debt cannot be cancelled.", status_code=400)
+        self.assertTemplateUsed(response, "main/error.html")
+        self.assertNotContains(response, 'class="messages"', status_code=400)
+        self.debt.refresh_from_db()
+        self.assertEqual(self.debt.status, Debt.Status.PARTIAL)
+        self.assertEqual(self.debt.payments.count(), 1)
+
+    def test_date_filter_still_applies_valid_boundary_when_other_is_invalid(self):
+        from datetime import date
+
+        self.debt.due_date = date(2027, 1, 10)
+        self.debt.save()
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse("debt_list"), {
+            "from": "invalid-date", "to": "2027-01-01",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(self.debt, response.context["debts"])
+
+КОНЕЦ ФАЙЛА: main/test_refactoring.py
+
+========================================================================
+ФАЙЛ: main/templates/main/_field.html
+========================================================================
+
+<div class="field-group {% if field.errors %}has-error{% endif %}">
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.help_text %}
+        <div class="help-text">
+            {{ field.help_text|safe }}
+        </div>
+    {% endif %}
+    {% for error in field.errors %}
+        <small>{{ error }}</small>
+    {% endfor %}
+</div>
+
+КОНЕЦ ФАЙЛА: main/templates/main/_field.html
+
+========================================================================
+ФАЙЛ: main/templates/main/_form.html
+========================================================================
+
+{% load i18n %}
+{% csrf_token %}
+{% if form.non_field_errors %}
+    <div class="form-alert">
+        {{ form.non_field_errors }}
+    </div>
+{% endif %}
+{% for field in form %}
+    {% include 'main/_field.html' %}
+{% endfor %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/_form.html
+
+========================================================================
+ФАЙЛ: main/templates/main/_pagination.html
+========================================================================
+
+{% load i18n %}
+{% if is_paginated %}
+    <nav class="pagination" aria-label="{% translate 'Pages' %}">
+        {% if page_obj.has_previous %}
+            <a href="{% querystring page=page_obj.previous_page_number %}">{% translate "← Back" %}</a>
+        {% endif %}
+        <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="{% querystring page=page_obj.next_page_number %}">{% translate "Next →" %}</a>
+        {% endif %}
+    </nav>
+{% endif %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/_pagination.html
+
+========================================================================
+ФАЙЛ: main/templates/main/action_log_list.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Activity log" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "HISTORY" %}</p>
+                <h1>{% translate "Activity log" %}</h1>
+            </div>
+        </div>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% translate "Action" %}</th>
+                        <th>{% translate "User" %}</th>
+                        <th>{% translate "Date" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in actions %}
+                        <tr>
+                            <td>{{ item.display_action }}</td>
+                            <td>{{ item.user.username|default:_("System") }}</td>
+                            <td>{{ item.created_at|date:"d.m.Y, H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3">{% translate "No activity yet" %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'main/_pagination.html' %}
+    </section>
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/action_log_list.html
+
+========================================================================
+ФАЙЛ: main/templates/main/base.html
+========================================================================
+
+{% load static i18n %}
+{% get_current_language as CURRENT_LANGUAGE %}
+<!DOCTYPE html>
+<html lang="{{ CURRENT_LANGUAGE }}" data-theme="light">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="{% translate 'Qarz — simple debt tracking for small businesses.' %}">
+        <title>{% block title %}Qarz{% endblock %} · Qarz</title>
+        <script>
+            try {
+                const savedTheme = localStorage.getItem('qarz-theme');
+                if (savedTheme === 'dark' || savedTheme === 'light') document.documentElement.dataset.theme = savedTheme;
+            } catch (error) {  }
+        </script>
+        <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
+    </head>
+    <body>
+        <header class="site-header">
+            <div class="header-inner{% if not user.is_authenticated %} public-header{% endif %}">
+                <a class="brand" href="{% url 'home' %}" aria-label="{% translate 'Qarz — home' %}"> <span class="brand-mark">Q</span><span>Qarz</span> </a>
+                {% if user.is_authenticated %}
+                    <nav class="desktop-nav" aria-label="{% translate 'Main navigation' %}">
+                        {% if user.role == 'client' %}
+                            <a href="{% url 'client_debt_list' %}"{% if request.resolver_match.url_name == 'client_debt_list' or request.resolver_match.url_name == 'client_debt_detail' %} class="active"{% endif %}>{% translate "My debts" %}</a>
+                        {% else %}
+                            <a href="{% url 'home' %}"{% if request.resolver_match.url_name == 'home' %} class="active"{% endif %}>{% translate "Overview" %}</a>
+                            <a href="{% url 'customer_list' %}"{% if 'customer' in request.resolver_match.url_name %} class="active"{% endif %}>{% translate "Customers" %}</a>
+                            <a href="{% url 'debt_list' %}"{% if request.resolver_match.url_name == 'debt_list' or request.resolver_match.url_name == 'debt_create' or request.resolver_match.url_name == 'debt_detail' or request.resolver_match.url_name == 'debt_update' or request.resolver_match.url_name == 'debt_cancel' %} class="active"{% endif %}>{% translate "Debts" %}</a>
+                            <a href="{% url 'payment_list' %}"{% if 'payment' in request.resolver_match.url_name %} class="active"{% endif %}>{% translate "Payments" %}</a>
+                            {% if user.role == 'owner' %}
+                                <a href="{% url 'employee_list' %}"{% if 'employee' in request.resolver_match.url_name %} class="active"{% endif %}>{% translate "Staff" %}</a>
+                                <a href="{% url 'action_list' %}"{% if request.resolver_match.url_name == 'action_list' %} class="active"{% endif %}>{% translate "History" %}</a>
+                            {% endif %}
+                        {% endif %}
+                    </nav>
+                {% endif %}
+                <div class="header-actions">
+                    <form class="language-switcher" action="{% url 'set_language' %}" method="post" aria-label="{% translate 'Interface language' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit" name="language" value="ru" lang="ru" aria-label="{% translate 'Русский' %}" {% if CURRENT_LANGUAGE == 'ru' %}aria-pressed="true"{% else %}aria-pressed="false"{% endif %}>RU</button>
+                        <button type="submit" name="language" value="en" lang="en" aria-label="English" {% if CURRENT_LANGUAGE == 'en' %}aria-pressed="true"{% else %}aria-pressed="false"{% endif %}>EN</button>
+                        <button type="submit" name="language" value="tg" lang="tg" aria-label="{% translate 'Тоҷикӣ' %}" {% if CURRENT_LANGUAGE == 'tg' %}aria-pressed="true"{% else %}aria-pressed="false"{% endif %}>TJ</button>
+                    </form>
+                    <button class="icon-button theme-toggle" type="button" aria-label="{% translate 'Switch theme' %}">
+                        <svg class="sun-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+                        <svg class="moon-icon" viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z"/></svg>
+                    </button>
+                    {% if user.is_authenticated %}
+                        <div class="profile">
+                            <span class="avatar">{{ user.username|first|upper }}</span>
+                            <span class="profile-name">{{ user.username }}</span>
+                        </div>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="logout-button" type="submit" aria-label="{% translate 'Log out' %}">↗</button>
+                        </form>
+                    {% else %}
+                        <a class="button secondary" href="{% url 'login' %}">{% translate "Log in" %}</a>
+                        <a class="header-login" href="{% url 'register' %}">{% translate "Sign up" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+        <main class="page-shell">
+            {% block content %}
+            {% endblock %}
+        </main>
+        {% if user.is_authenticated %}
+            <nav class="mobile-nav{% if user.role == 'owner' %} owner-nav{% endif %}" aria-label="{% translate 'Mobile navigation' %}">
+                {% if user.role == 'client' %}
+                    <a class="active" href="{% url 'client_debt_list' %}"><span>▤</span>{% translate "My debts" %}</a>
+                {% else %}
+                    <a href="{% url 'home' %}"><span>⌂</span>{% translate "Overview" %}</a>
+                    <a href="{% url 'customer_list' %}"><span>♙</span>{% translate "Customers" %}</a>
+                    <a href="{% url 'debt_list' %}"><span>▤</span>{% translate "Debts" %}</a>
+                    <a href="{% url 'payment_list' %}"><span>✓</span>{% translate "Payments" %}</a>
+                    {% if user.role == 'owner' %}
+                        <a href="{% url 'employee_list' %}"{% if 'employee' in request.resolver_match.url_name %} class="active"{% endif %}><span>♙</span>{% translate "Staff" %}</a>
+                        <a href="{% url 'action_list' %}"{% if request.resolver_match.url_name == 'action_list' %} class="active"{% endif %}><span>◷</span>{% translate "History" %}</a>
+                    {% endif %}
+                {% endif %}
+            </nav>
+        {% endif %}
+        <script src="{% static 'main/js/theme.js' %}"></script>
+    </body>
+</html>
+
+КОНЕЦ ФАЙЛА: main/templates/main/base.html
+
+========================================================================
+ФАЙЛ: main/templates/main/confirm_delete.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Customer archive" %}{% endblock %}
+{% block content %}
+    <section class="form-page">
+        <a class="back-link" href="{% url 'customer_detail' object.pk %}">{% translate "← Back" %}</a>
+        <div class="auth-card">
+            <h1>{% if object.is_archived %}{% translate "Restore this customer?" %}{% else %}{% translate "Archive this customer?" %}{% endif %}</h1>
+            <p>«{{ object.name }}{% translate "». All debts and payments will be kept. You can restore this customer later." %}</p>
+            <form class="confirm-actions" method="post">
+                {% csrf_token %}
+                <a class="button secondary" href="{% url 'customer_detail' object.pk %}">{% translate "Back" %}</a>
+                <button class="button" type="submit">{% translate "Confirm" %}</button>
+            </form>
+        </div>
+    </section>
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/confirm_delete.html
+
+========================================================================
+ФАЙЛ: main/templates/main/customer_detail.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <a class="back-link" href="{% url 'customer_list' %}">{% translate "← Customers" %}</a>
+        <div class="page-heading">
+            <div>
+                <h1>{{ customer.name }}</h1>
+                <p>{{ customer.phone }} · {{ customer.address|default:_("No address provided") }}</p>
+            </div>
+            <div class="dashboard-actions">
+                <a class="button secondary" href="{% url 'customer_update' customer.pk %}">{% translate "Edit" %}</a>
+                <a class="button" href="{% url 'debt_create' %}?customer={{ customer.pk }}">{% translate "Add debt" %}</a>
+            </div>
+        </div>
+        <div class="stats-grid three">
+            <article class="stat-card">
+                <span>{% translate "Total debt" %}</span>
+                <strong>{{ customer.total_debt|floatformat:2 }} <i>TJS</i></strong>
+            </article>
+            <article class="stat-card">
+                <span>{% translate "Paid" %}</span>
+                <strong>{{ customer.total_paid|floatformat:2 }} <i>TJS</i></strong>
+            </article>
+            <article class="stat-card featured">
+                <span>{% translate "Balance" %}</span>
+                <strong>{{ customer.remaining_debt|floatformat:2 }} <i>TJS</i></strong>
+            </article>
+        </div>
+        <section class="table-section">
+            <div class="section-row">
+                <div>
+                    <h2>{% translate "Customer debts" %}</h2>
+                    <p>{% translate "Debt and payment history" %}</p>
+                </div>
+            </div>
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{% translate "Amount" %}</th>
+                            <th>{% translate "Balance" %}</th>
+                            <th>{% translate "Due date" %}</th>
+                            <th>{% translate "Status" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for debt in customer.debts.all %}
+                            <tr>
+                                <td><a href="{% url 'debt_detail' debt.pk %}">{{ debt.amount|floatformat:2 }} TJS</a></td>
+                                <td>{{ debt.remaining_amount|floatformat:2 }} TJS</td>
+                                <td>{% if debt.due_date %}{{ debt.due_date|date:"d.m.Y" }}{% else %}<span class="empty-value">{% translate "Not set" %}</span>{% endif %}</td>
+                                <td><span class="status status-{{ debt.status }}">{{ debt.get_status_display }}</span></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td class="empty-row" colspan="4">{% translate "This customer has no debts yet" %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% if customer.note %}
+            <p class="customer-note">{{ customer.note|linebreaksbr }}</p>
+        {% endif %}
+        {% if user.role == 'owner' %}
+            <div class="record-actions">
+                {% if not customer.user %}
+                    <a class="button secondary" href="{% url 'client_account_create' customer.pk %}">{% translate "Create customer access" %}</a>
+                {% else %}
+                    <p>{% translate "Account:" %} {{ customer.user.username }}</p>
+                {% endif %}
+                <a class="text-danger" href="{% url 'customer_delete' customer.pk %}">{% if customer.is_archived %}{% translate "Restore from archive" %}{% else %}{% translate "Archive" %}{% endif %}</a>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/customer_detail.html
+
+========================================================================
+ФАЙЛ: main/templates/main/customer_list.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Customers" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "SHOP" %}</p>
+                <h1>{% translate "Customers" %}</h1>
+            </div>
+            <a class="button" href="{% url 'customer_create' %}">{% translate "＋ Add customer" %}</a>
+        </div>
+        <form class="filter-bar">
+            <label>
+                {% translate "Archive" %}
+                <select name="archived">
+                    <option value="">{% translate "Current customers" %}</option>
+                    <option value="1"{% if request.GET.archived == '1' %} selected{% endif %}>{% translate "Archive" %}</option>
+                </select>
+            </label>
+            <input name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Name or phone number' %}">
+            <button class="button" type="submit">{% translate "Search" %}</button>
+        </form>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% translate "Name" %}</th>
+                        <th>{% translate "Phone" %}</th>
+                        <th>{% translate "Total debt" %}</th>
+                        <th>{% translate "Balance" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                        <tr>
+                            <td><a href="{% url 'customer_detail' customer.pk %}">{{ customer.name }}</a></td>
+                            <td>{{ customer.phone }}</td>
+                            <td>{{ customer.total_debt|floatformat:2 }} TJS</td>
+                            <td>{{ customer.remaining_debt|floatformat:2 }} TJS</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">{% translate "No customers yet" %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'main/_pagination.html' %}
+    </section>
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/customer_list.html
+
+========================================================================
+ФАЙЛ: main/templates/main/debt_detail.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Debt" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <a class="back-link" href="{% if user.role == 'client' %}{% url 'client_debt_list' %}{% else %}{% url 'debt_list' %}{% endif %}">{% translate "← Debts" %}</a>
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "DEBT #" %}{{ debt.pk }}</p>
+                <h1>{{ debt.customer.name }}</h1>
+                <p>{{ debt.description|default:_("No description") }}</p>
+                <div class="debt-meta">
+                    <span>{% translate "Created" %} {{ debt.created_at|date:"d.m.Y" }}</span>
+                    <span>{% translate "Due:" %} {% if debt.due_date %}<strong>{{ debt.due_date|date:"d.m.Y" }}</strong>{% else %}{% translate "not set" %}{% endif %}</span>
+                </div>
+            </div>
+            {% if user.role != 'client' %}
+                <div class="dashboard-actions">
+                    {% if debt.status != 'cancelled' %}
+                        <a class="button secondary" href="{% url 'debt_update' debt.pk %}">{% translate "Edit" %}</a>
+                    {% endif %}
+                    {% if debt.remaining_amount > 0 and debt.status != 'cancelled' %}
+                        <a class="button" href="{% url 'payment_create' %}?debt={{ debt.pk }}">{% translate "Accept payment" %}</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+        {% if debt.is_overdue %}
+            <p class="message overdue">{% translate "This debt is overdue" %}</p>
+        {% endif %}
+        <p><span class="status status-{{ debt.status }}">{{ debt.get_status_display }}</span></p>
+        <div class="stats-grid three">
+            <article class="stat-card">
+                <span>{% translate "Amount" %}</span>
+                <strong>{{ debt.amount }} <i>TJS</i></strong>
+            </article>
+            <article class="stat-card">
+                <span>{% translate "Paid" %}</span>
+                <strong>{{ debt.paid_amount }} <i>TJS</i></strong>
+            </article>
+            <article class="stat-card featured">
+                <span>{% translate "Balance" %}</span>
+                <strong>{{ debt.remaining_amount }} <i>TJS</i></strong>
+            </article>
+        </div>
+        <section class="table-section">
+            <h2>{% translate "Payment history" %}</h2>
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{% translate "Amount" %}</th>
+                            <th>{% translate "Accepted by" %}</th>
+                            <th>{% translate "Date" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in debt.payments.all %}
+                            <tr>
+                                <td>{{ payment.amount }} TJS</td>
+                                <td>{{ payment.accepted_by.username }}</td>
+                                <td>{{ payment.created_at|date:"d.m.Y, H:i" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3">{% translate "No payments yet" %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% if user.role != 'client' and not debt.payments.exists and debt.status != 'cancelled' %}
+            <form class="danger-zone" action="{% url 'debt_cancel' debt.pk %}" method="post">
+                {% csrf_token %}
+                <button type="submit">{% translate "Cancel debt" %}</button>
+            </form>
+        {% endif %}
+    </section>
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/debt_detail.html
+
+========================================================================
+ФАЙЛ: main/templates/main/debt_list.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Debts" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "RECORDS" %}</p>
+                <h1>{% if user.role == 'client' %}{% translate "My debts" %}{% else %}{% translate "Debts" %}{% endif %}</h1>
+                <p>{% translate "Amounts, due dates and payment history" %}</p>
+            </div>
+            {% if user.role != 'client' %}
+                <a class="button" href="{% url 'debt_create' %}">{% translate "＋ Add debt" %}</a>
+            {% endif %}
+        </div>
+        {% if user.role != 'client' %}
+            <form class="filter-bar" method="get">
+                <label>{% translate "Customer" %}<input name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Search by name' %}"></label>
+                <label>
+                    {% translate "Status" %}
+                    <select name="status">
+                        <option value="">{% translate "All" %}</option>
+                        <option value="active"{% if request.GET.status == 'active' %} selected{% endif %}>{% translate "Active" %}</option>
+                        <option value="overdue"{% if request.GET.status == 'overdue' %} selected{% endif %}>{% translate "Overdue" %}</option>
+                        <option value="paid"{% if request.GET.status == 'paid' %} selected{% endif %}>{% translate "Paid" %}</option>
+                        <option value="cancelled"{% if request.GET.status == 'cancelled' %} selected{% endif %}>{% translate "Cancelled" %}</option>
+                    </select>
+                </label>
+                <label>{% translate "Due from" %}<input type="date" name="from" value="{{ request.GET.from }}"></label>
+                <label>{% translate "Due until" %}<input type="date" name="to" value="{{ request.GET.to }}"></label>
+                <button class="button secondary">{% translate "Search" %}</button>
+                <a class="back-link" href="{% url 'debt_list' %}">{% translate "Reset" %}</a>
+            </form>
+        {% endif %}
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% translate "Customer" %}</th>
+                        <th>{% translate "Amount" %}</th>
+                        <th>{% translate "Balance" %}</th>
+                        <th>{% translate "Due date" %}</th>
+                        <th>{% translate "Status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for debt in debts %}
+                        <tr>
+                            <td>
+                                <a href="{% if user.role == 'client' %}{% url 'client_debt_detail' debt.pk %}{% else %}{% url 'debt_detail' debt.pk %}{% endif %}">{{ debt.customer.name }}</a>
+                                <small class="cell-note">{% translate "dated" %} {{ debt.created_at|date:"d.m.Y" }}</small>
+                            </td>
+                            <td>{{ debt.amount|floatformat:2 }} TJS</td>
+                            <td>{{ debt.remaining_amount|floatformat:2 }} TJS</td>
+                            <td{% if debt.is_overdue %} class="overdue"{% endif %}>{{ debt.due_date|date:"d.m.Y"|default:_("Not set") }}{% if debt.is_overdue %}<small class="cell-note">{% translate "Overdue" %}</small>{% endif %}</td>
+                            <td><span class="status status-{{ debt.status }}">{{ debt.get_status_display }}</span></td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td class="empty-row" colspan="5">{% translate "No debts found" %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'main/_pagination.html' %}
+    </section>
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/debt_list.html
+
+========================================================================
+ФАЙЛ: main/templates/main/employee_list.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Staff" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "TEAM" %}</p>
+                <h1>{% translate "Staff" %}</h1>
+                <p>{% translate "Manage cashier access" %}</p>
+            </div>
+            <a class="button" href="{% url 'employee_create' %}">{% translate "＋ Add cashier" %}</a>
+        </div>
+        <form class="search-form">
+            <input name="q" aria-label="{% translate 'Search staff' %}" placeholder="{% translate 'Username' %}" value="{{ request.GET.q }}">
+            <button class="button secondary">{% translate "Search" %}</button>
+        </form>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% translate "Staff member" %}</th>
+                        <th>{% translate "Role" %}</th>
+                        <th>{% translate "Status" %}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                        <tr>
+                            <td>
+                                <div class="person-cell">
+                                    <span class="avatar">{{ employee.user.username|first|upper }}</span>
+                                    <strong>{{ employee.user.username }}</strong>
+                                </div>
+                            </td>
+                            <td>{% translate "Cashier" %}</td>
+                            <td><span class="status {% if employee.is_active %}status-paid{% else %}status-cancelled{% endif %}">{% if employee.is_active %}{% translate "Active" %}{% else %}{% translate "Disabled" %}{% endif %}</span></td>
+                            <td class="row-action">
+                                <form action="{% url 'employee_delete' employee.pk %}" method="post" data-confirm="{% translate 'Change this staff member’s access?' %}">
+                                    {% csrf_token %}
+                                    <button class="text-danger" type="submit">{% if employee.is_active %}{% translate "Disable" %}{% else %}{% translate "Enable" %}{% endif %}</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td class="empty-row" colspan="4">{% translate "No staff yet" %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/employee_list.html
+
+========================================================================
+ФАЙЛ: main/templates/main/error.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+    <section class="form-page">
+        <div class="auth-card">
+            <h1>{{ page_title }}</h1>
+            <p>{{ explanation }}</p>
+            <a class="button" href="{% url 'home' %}">{% translate "Home" %}</a>
+        </div>
+    </section>
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/error.html
+
+========================================================================
+ФАЙЛ: main/templates/main/form_page.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+    <section class="form-page">
+        <a class="back-link" href="{% url back_url %}">{% translate "← Back" %}</a>
+        <div class="auth-card">
+            <div class="form-heading">
+                <h1>{{ page_title }}</h1>
+                {% if object %}
+                    <p>{% translate "Edit record" %}</p>
+                {% endif %}
+            </div>
+            {% if notice %}
+                <p>{{ notice }}</p>
+            {% endif %}
+            {% if form %}
+                <form class="auth-form" method="post" novalidate>
+                    {% include 'main/_form.html' %}
+                    {% if payment_form %}
+                        <div class="payment-balance" hidden>
+                            <p>{% translate "Balance:" %} <strong id="balance-value"></strong> TJS</p>
+                            <button type="button" class="button secondary" id="pay-full">{% translate "Pay in full" %}</button>
+                        </div>
+                        {{ debt_balances|json_script:"debt-balances" }}
+                    {% endif %}
+                    <button class="button button-full" type="submit">{% if submit_label %}{{ submit_label }}{% else %}{% translate "Save" %}{% endif %}</button>
+                </form>
+            {% elif validlink == False %}
+                <p>{% translate "This link is invalid or has already been used. Request a new one." %}</p>
+                <a href="{% url 'password_reset' %}">{% translate "Reset password" %}</a>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/form_page.html
+
+========================================================================
+ФАЙЛ: main/templates/main/home.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% if user.is_authenticated %}{% translate "Overview" %}{% else %}{% translate "Debt tracking for businesses" %}{% endif %}{% endblock %}
+{% block content %}
+    {% if user.is_authenticated %}
+        <section class="dashboard">
+            <div class="dashboard-heading">
+                <div>
+                    <p class="overline">{% translate "WORKSPACE" %}</p>
+                    <h1>{% translate "Overview" %}</h1>
+                    <p>{% translate "Shop «" %}{{ shop.name|default:_("Not set") }}»</p>
+                </div>
+                <div class="dashboard-actions">
+                    <a class="button secondary" href="{% url 'customer_create' %}"><span>＋</span> {% translate "Add customer" %}</a>
+                    <a class="button" href="{% url 'debt_create' %}"><span>＋</span> {% translate "Add debt" %}</a>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span>{% translate "Customers" %}</span>
+                        <span class="stat-icon">♙</span>
+                    </div>
+                    <strong>{{ customer_count }}</strong>
+                    <small>{% translate "Total shop customers" %}</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span>{% translate "Total debt amount" %}</span>
+                        <span class="stat-icon">↗</span>
+                    </div>
+                    <strong>{{ total_debt|floatformat:2 }} <i>TJS</i></strong>
+                    <small>{% translate "Active debts:" %} {{ active_debt_count }}</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span>{% translate "Received" %}</span>
+                        <span class="stat-icon">✓</span>
+                    </div>
+                    <strong>{{ total_paid|floatformat:2 }} <i>TJS</i></strong>
+                    <small><b>{{ payment_percent }}%</b> {% translate "of the total amount" %}</small>
+                </article>
+                <article class="stat-card featured">
+                    <div class="stat-top">
+                        <span>{% translate "Balance" %}</span>
+                        <span class="stat-icon">◷</span>
+                    </div>
+                    <strong>{{ remaining_debt|floatformat:2 }} <i>TJS</i></strong>
+                    <small>{% translate "Awaiting payment" %}</small>
+                </article>
+            </div>
+            <section class="activity-card">
+                <div class="card-title">
+                    <div>
+                        <h2>{% translate "Recent activity" %}</h2>
+                        <p>{% translate "Debt and payment activity" %}</p>
+                    </div>
+                    {% if user.role == 'owner' %}
+                        <a href="{% url 'action_list' %}">{% translate "All activity →" %}</a>
+                    {% endif %}
+                </div>
+                <div class="activity-list">
+                    {% for item in recent_actions %}
+                        <div class="activity-row">
+                            <span class="activity-icon client">✓</span>
+                            <div class="activity-info">
+                                <strong>{{ item.display_action }}</strong>
+                                <small>{{ item.user.username|default:_("System") }}</small>
+                            </div>
+                            <div class="activity-value">
+                                <small>{{ item.created_at|date:"d.m.Y, H:i" }}</small>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="activity-row">
+                            <span class="activity-icon client">○</span>
+                            <div class="activity-info">
+                                <strong>{% translate "No activity yet" %}</strong>
+                                <small>{% translate "New activity will appear here" %}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </section>
+    {% else %}
+        <section class="landing-hero">
+            <div class="hero-copy">
+                <p class="overline">{% translate "QARZ · DEBT TRACKING FOR BUSINESSES" %}</p>
+                <h1>{% translate "Focus on your customers." %}<br><span>{% translate "Keep track of debts with Qarz." %}</span></h1>
+                <p class="lead">{% translate "Your shop’s customers, debts and payments in one place. Record sales on credit, accept partial payments and always know the outstanding balance." %}</p>
+                <div class="hero-actions">
+                    <a class="button" href="{% url 'register' %}">{% translate "Get started" %} <span aria-hidden="true">→</span></a>
+                    <a class="button secondary" href="#how-it-works">{% translate "How it works" %}</a>
+                </div>
+                <p class="landing-note">{% translate "Explore the features without signing up. Create an account when you’re ready to manage your shop’s records." %}</p>
+            </div>
+            <aside class="process-card" aria-label="{% translate 'Debt tracking example' %}">
+                <p class="overline">{% translate "EXAMPLE" %}</p>
+                <h2>{% translate "Every payment accounted for" %}</h2>
+                <div class="sample-ledger">
+                    <div>
+                        <span>{% translate "Debt amount" %}</span>
+                        <strong>1 000 TJS</strong>
+                    </div>
+                    <div>
+                        <span>{% translate "Received" %}</span>
+                        <strong>400 TJS</strong>
+                    </div>
+                    <div class="sample-total">
+                        <span>{% translate "Outstanding balance" %}</span>
+                        <strong>600 TJS</strong>
+                    </div>
+                </div>
+                <p class="landing-note">{% translate "Example figures. Your balance is calculated automatically from recorded payments." %}</p>
+            </aside>
+        </section>
+        <section class="landing-section" aria-labelledby="audience-title">
+            <div class="landing-section-heading">
+                <p class="overline">{% translate "FOR EVERYDAY WORK" %}</p>
+                <h2 id="audience-title">{% translate "For businesses that sell on credit" %}</h2>
+                <p>{% translate "For shops and small sales teams that need a clear overview and a reliable record of customer agreements." %}</p>
+            </div>
+            <div class="landing-grid">
+                <article>
+                    <span class="feature-number">01</span>
+                    <h3>{% translate "For shop owners" %}</h3>
+                    <p>{% translate "Keep an eye on total debt, incoming payments and cashier activity." %}</p>
+                </article>
+                <article>
+                    <span class="feature-number">02</span>
+                    <h3>{% translate "For cashiers" %}</h3>
+                    <p>{% translate "Find customers quickly, record debts and log every payment." %}</p>
+                </article>
+                <article>
+                    <span class="feature-number">03</span>
+                    <h3>{% translate "For customers" %}</h3>
+                    <p>{% translate "View your debts, due dates and payment history in your account. Your shop provides access." %}</p>
+                </article>
+            </div>
+        </section>
+        <section class="landing-section" aria-labelledby="features-title">
+            <div class="landing-section-heading">
+                <p class="overline">{% translate "FEATURES" %}</p>
+                <h2 id="features-title">{% translate "Organized records. Clear balances." %}</h2>
+            </div>
+            <div class="landing-grid">
+                <article>
+                    <h3>{% translate "Customers and contacts" %}</h3>
+                    <p>{% translate "Names, phone numbers, addresses and notes alongside each customer’s debt history." %}</p>
+                </article>
+                <article>
+                    <h3>{% translate "Due dates and overdue debts" %}</h3>
+                    <p>{% translate "Set due dates and use filters to find overdue debts." %}</p>
+                </article>
+                <article>
+                    <h3>{% translate "Partial payments" %}</h3>
+                    <p>{% translate "Accept partial or full payments. The outstanding balance updates automatically." %}</p>
+                </article>
+                <article>
+                    <h3>{% translate "Role-based access" %}</h3>
+                    <p>{% translate "Owners manage the shop, cashiers record transactions and customers see only their own debts." %}</p>
+                </article>
+                <article>
+                    <h3>{% translate "History and archive" %}</h3>
+                    <p>{% translate "Review staff activity and archive customers while keeping their records." %}</p>
+                </article>
+            </div>
+        </section>
+        <section class="landing-section" id="how-it-works" aria-labelledby="steps-title">
+            <div class="landing-section-heading">
+                <p class="overline">{% translate "HOW IT WORKS" %}</p>
+                <h2 id="steps-title">{% translate "Three steps to clear records" %}</h2>
+            </div>
+            <ol class="landing-grid steps-list">
+                <li>
+                    <span class="feature-number">01</span>
+                    <h3>{% translate "Set up your shop" %}</h3>
+                    <p>{% translate "Sign up, enter your shop’s name and add cashiers if needed." %}</p>
+                </li>
+                <li>
+                    <span class="feature-number">02</span>
+                    <h3>{% translate "Add a customer and a debt" %}</h3>
+                    <p>{% translate "Enter contact details, the amount, a description and the due date." %}</p>
+                </li>
+                <li>
+                    <span class="feature-number">03</span>
+                    <h3>{% translate "Record payments" %}</h3>
+                    <p>{% translate "Accept payments and track balances in the overview and customer details." %}</p>
+                </li>
+            </ol>
+        </section>
+        <section class="landing-cta">
+            <div>
+                <h2>{% translate "Keep your records close at hand" %}</h2>
+                <p>{% translate "Create an account and start managing your shop’s records." %}</p>
+            </div>
+            <div class="hero-actions">
+                <a class="button" href="{% url 'register' %}">{% translate "Get started" %}</a>
+                <a class="button secondary" href="{% url 'login' %}">{% translate "Already have an account? Log in" %}</a>
+            </div>
+        </section>
+        <footer class="landing-footer">
+            <span>Qarz · TJS</span>
+            <p>{% translate "Debt tracking everyone can understand." %}</p>
+        </footer>
+    {% endif %}
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/home.html
+
+========================================================================
+ФАЙЛ: main/templates/main/login.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Log in" %}{% endblock %}
+{% block content %}
+    <section class="auth-layout">
+        <div class="auth-copy">
+            <p class="overline">{% translate "WELCOME BACK" %}</p>
+            <h1>{% translate "Get back to business" %} <span>{% translate "without the hassle." %}</span></h1>
+            <p>{% translate "Log in to see your business’s debts, payments and customers." %}</p>
+        </div>
+        <div class="auth-card">
+            <div class="auth-heading">
+                <span class="brand-mark">Q</span>
+                <div>
+                    <h2>{% translate "Log in to Qarz" %}</h2>
+                    <p>{% translate "Enter your account details" %}</p>
+                </div>
+            </div>
+            <form class="auth-form" method="post" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="form-alert">
+                        {{ form.non_field_errors|striptags }}
+                    </div>
+                {% endif %}
+                {% include 'main/_field.html' with field=form.username %}
+                {% include 'main/_field.html' with field=form.password %}
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+                <button class="button button-full" type="submit">{% translate "Log in" %} <span>→</span></button>
+            </form>
+            <p><a href="{% url 'password_reset' %}">{% translate "Forgot your password?" %}</a></p>
+            <p class="auth-footer">{% translate "Don’t have an account?" %} <a href="{% url 'register' %}">{% translate "Sign up" %}</a></p>
+        </div>
+    </section>
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/login.html
+
+========================================================================
+ФАЙЛ: main/templates/main/payment_list.html
+========================================================================
+
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Payments" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "FINANCES" %}</p>
+                <h1>{% translate "Payments" %}</h1>
+                <p>{% translate "History of all received payments" %}</p>
+            </div>
+            <a class="button" href="{% url 'payment_create' %}">{% translate "＋ Accept payment" %}</a>
+        </div>
+        <form class="search-form">
+            <input name="q" aria-label="{% translate 'Search payments by customer' %}" placeholder="{% translate 'Customer name' %}" value="{{ request.GET.q }}">
+            <button class="button secondary">{% translate "Search" %}</button>
+        </form>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% translate "Customer" %}</th>
+                        <th>{% translate "Amount" %}</th>
+                        <th>{% translate "Accepted by" %}</th>
+                        <th>{% translate "Date" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                        <tr>
+                            <td><a href="{% url 'debt_detail' payment.debt.pk %}">{{ payment.debt.customer.name }}</a></td>
+                            <td>{{ payment.amount }} TJS</td>
+                            <td>{{ payment.accepted_by.username }}</td>
+                            <td>{{ payment.created_at|date:"d.m.Y, H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">{% translate "No payments yet" %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'main/_pagination.html' %}
+    </section>
+{% endblock %}
+
+КОНЕЦ ФАЙЛА: main/templates/main/payment_list.html
+
+========================================================================
+ФАЙЛ: main/tests.py
+========================================================================
+
+from django.test import TestCase, override_settings
+from django.core.exceptions import ValidationError
+from django.core import mail
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.utils import timezone
+from datetime import timedelta
+from django.urls import reverse
+from datetime import date
+from django.test import Client
+from django.conf import settings
+from django.utils.translation import override, gettext
+from .models import ActionLog
+
+from .models import Customer, Debt, Employee, Payment, Shop, User
+
+
+class PageRenderingTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner", password="test-password", role=User.Role.OWNER)
+        self.shop = Shop.objects.create(owner=self.owner, name="Test shop")
+        self.customer = Customer.objects.create(shop=self.shop, name="Customer Record 123", phone="123")
+        self.debt = Debt.objects.create(customer=self.customer, amount="100.00", created_by=self.owner)
+
+    def test_public_pages_render(self):
+        for name in ("home", "login", "register"):
+            with self.subTest(name=name):
+                self.assertEqual(self.client.get(reverse(name)).status_code, 200)
+
+    def test_owner_pages_render(self):
+        self.client.force_login(self.owner)
+        pages = (
+            ("home", None),
+            ("customer_list", None),
+            ("customer_create", None),
+            ("customer_detail", self.customer.pk),
+            ("customer_update", self.customer.pk),
+            ("customer_delete", self.customer.pk),
+            ("debt_list", None),
+            ("debt_create", None),
+            ("debt_detail", self.debt.pk),
+            ("debt_update", self.debt.pk),
+            ("payment_list", None),
+            ("payment_create", None),
+            ("employee_list", None),
+            ("employee_create", None),
+            ("action_list", None),
+        )
+        for name, pk in pages:
+            with self.subTest(name=name):
+                args = [pk] if pk is not None else []
+                self.assertEqual(self.client.get(reverse(name, args=args)).status_code, 200)
+
+    def test_client_pages_render_and_owner_data_is_not_exposed(self):
+        client_user = User.objects.create_user(username="client", password="test-password", role=User.Role.CLIENT)
+        self.customer.user = client_user
+        self.customer.save(update_fields=["user"])
+        self.client.force_login(client_user)
+
+        self.assertRedirects(self.client.get(reverse("home")), reverse("client_debt_list"))
+        self.assertEqual(self.client.get(reverse("client_debt_list")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("client_debt_detail", args=[self.debt.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("customer_list")).status_code, 403)
+
+    def test_debt_due_date_uses_calendar_and_is_saved(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse("debt_create"))
+        self.assertContains(response, 'type="date"')
+
+        response = self.client.post(reverse("debt_create"), {
+            "customer": self.customer.pk,
+            "amount": "250.50",
+            "description": "Test debt",
+            "due_date": "2027-01-25",
+        })
+        created_debt = Debt.objects.exclude(pk=self.debt.pk).get()
+        self.assertRedirects(response, reverse("debt_detail", args=[created_debt.pk]))
+        self.assertEqual(created_debt.due_date, date(2027, 1, 25))
+
+    def test_guest_redirects_to_existing_login(self):
+        self.assertRedirects(self.client.get(reverse("customer_list")),
+                             reverse("login") + "?next=/customers/")
+
+    def test_archive_preserves_financial_records_and_requires_owner(self):
+        cashier = User.objects.create_user(username="cashier", role=User.Role.CASHIER)
+        Employee.objects.create(shop=self.shop, user=cashier)
+        Payment.objects.create(debt=self.debt, amount="20", accepted_by=self.owner)
+        self.client.force_login(cashier)
+        url = reverse("customer_delete", args=[self.customer.pk])
+        self.assertEqual(self.client.post(url).status_code, 403)
+        self.client.force_login(self.owner)
+        self.assertRedirects(self.client.post(url), reverse("customer_list"))
+        self.customer.refresh_from_db()
+        self.assertTrue(self.customer.is_archived)
+        self.assertEqual(self.customer.debts.count(), 1)
+        self.assertEqual(Payment.objects.count(), 1)
+        self.assertNotContains(self.client.get(reverse("customer_list")), self.customer.name)
+        self.assertContains(self.client.get(reverse("customer_list") + "?archived=1"), self.customer.name)
+        self.client.post(url)
+        self.customer.refresh_from_db()
+        self.assertFalse(self.customer.is_archived)
+
+    def test_payment_rechecks_stale_balance_and_bulk_delete_refreshes_status(self):
+        stale = Payment(debt=self.debt, amount="80", accepted_by=self.owner)
+        Payment.objects.create(debt=self.debt, amount="60", accepted_by=self.owner)
+        with self.assertRaises(ValidationError):
+            stale.save()
+        Payment.objects.create(debt=self.debt, amount="40", accepted_by=self.owner)
+        self.debt.refresh_from_db()
+        self.assertEqual(self.debt.status, Debt.Status.PAID)
+        Payment.objects.filter(debt=self.debt).delete()
+        self.debt.refresh_from_db()
+        self.assertEqual(self.debt.status, Debt.Status.UNPAID)
+        self.assertEqual(self.debt.remaining_amount, 100)
+
+    def test_payment_form_rejects_overpayment(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(reverse("payment_create"), {"debt": self.debt.pk, "amount": "101"})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].errors)
+        self.assertEqual(Payment.objects.count(), 0)
+        response = self.client.post(reverse("payment_create"), {"debt": self.debt.pk, "amount": "100"})
+        self.assertRedirects(response, reverse("debt_detail", args=[self.debt.pk]))
+        self.debt.refresh_from_db()
+        self.assertEqual(self.debt.status, Debt.Status.PAID)
+        self.assertEqual(self.client.get(reverse("home")).context["active_debt_count"], 0)
+
+    def test_filters_and_due_date_edit(self):
+        self.client.force_login(self.owner)
+        due_date = timezone.localdate() - timedelta(days=1)
+        self.client.post(reverse("debt_update", args=[self.debt.pk]), {
+            "amount": "100", "description": "", "due_date": due_date.isoformat(),
+        })
+        self.debt.refresh_from_db()
+        self.assertEqual(self.debt.due_date, due_date)
+        self.assertTrue(self.debt.is_overdue)
+        self.assertContains(self.client.get(reverse("debt_list") + "?status=overdue"), self.customer.name)
+        self.assertNotContains(self.client.get(reverse("debt_list") + "?status=paid"), self.customer.name)
+        self.assertContains(self.client.get(reverse("debt_update", args=[self.debt.pk])), due_date.isoformat())
+
+    def test_new_owner_features_and_shop_isolation(self):
+        other_owner = User.objects.create_user(username="other")
+        other_shop = Shop.objects.create(owner=other_owner, name="Other")
+        other_customer = Customer.objects.create(shop=other_shop, name="Secret customer", phone="456")
+        other_debt = Debt.objects.create(customer=other_customer, amount="300", created_by=other_owner)
+        self.client.force_login(self.owner)
+        self.assertEqual(self.client.get(reverse("debt_detail", args=[other_debt.pk])).status_code, 404)
+        response = self.client.post(reverse("payment_create"), {"debt": other_debt.pk, "amount": "10"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Payment.objects.count(), 0)
+        self.assertEqual(self.client.get(reverse("client_account_create", args=[self.customer.pk])).status_code, 200)
+        response = self.client.post(reverse("client_account_create", args=[self.customer.pk]), {
+            "username": "new-client", "email": "client@example.test",
+            "password1": "Very-Strong-Test-Password!42", "password2": "Very-Strong-Test-Password!42",
+        })
+        self.assertRedirects(response, reverse("customer_list"))
+        self.customer.refresh_from_db()
+        self.assertEqual(self.customer.user.role, User.Role.CLIENT)
+        self.client.force_login(self.customer.user)
+        self.assertEqual(self.client.get(reverse("client_debt_detail", args=[other_debt.pk])).status_code, 404)
+        self.assertNotContains(self.client.get(reverse("client_debt_detail", args=[self.debt.pk])), "Accept payment")
+
+
+    def test_employee_can_be_disabled_and_reenabled(self):
+        cashier = User.objects.create_user(username="employee", role=User.Role.CASHIER)
+        employee = Employee.objects.create(shop=self.shop, user=cashier)
+        self.client.force_login(self.owner)
+        url = reverse("employee_delete", args=[employee.pk])
+        self.client.post(url)
+        self.client.force_login(cashier)
+        self.assertEqual(self.client.get(reverse("customer_list")).status_code, 403)
+        self.client.force_login(self.owner)
+        self.client.post(url)
+        self.client.force_login(cashier)
+        self.assertEqual(self.client.get(reverse("customer_list")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("action_list")).status_code, 403)
+
+    @override_settings(MAILERS={"default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}})
+    def test_password_reset_flow(self):
+        self.owner.email = "owner@example.test"
+        self.owner.save()
+        response = self.client.post(reverse("password_reset"), {"email": self.owner.email})
+        self.assertRedirects(response, reverse("password_reset_done"))
+        self.assertEqual(len(mail.outbox), 1)
+        token = default_token_generator.make_token(self.owner)
+        uid = urlsafe_base64_encode(force_bytes(self.owner.pk))
+        response = self.client.get(reverse("password_reset_confirm", args=[uid, token]))
+        url = response.url
+        self.assertEqual(self.client.get(url).status_code, 200)
+        response = self.client.post(url, {"new_password1": "New-Safe-Password!2026",
+                                       "new_password2": "New-Safe-Password!2026"})
+        self.assertRedirects(response, reverse("password_reset_complete"))
+        self.owner.refresh_from_db()
+        self.assertTrue(self.owner.check_password("New-Safe-Password!2026"))
+
+class LanguageAndAuthenticationTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user("language-owner", password="A-Strong-Test-Password!42")
+        self.shop = Shop.objects.create(owner=self.owner, name="Example shop")
+        self.customer = Customer.objects.create(shop=self.shop, name="Example customer", phone="123")
+        self.debt = Debt.objects.create(customer=self.customer, amount="100", created_by=self.owner)
+
+    def choose(self, code, destination="/"):
+        return self.client.post(reverse("set_language"), {"language": code, "next": destination}, follow=True)
+
+    def test_english_default_and_persistent_language_choice(self):
+        response = self.client.get("/", HTTP_ACCEPT_LANGUAGE="ru")
+        self.assertEqual(response.headers["Content-Language"], "en")
+        for code, heading in [("ru", "Долги считайте в Qarz."), ("en", "Keep track of debts with Qarz."), ("tg", "Қарзҳоро дар Qarz ҳисоб кунед.")]:
+            with self.subTest(language=code):
+                response = self.choose(code)
+                self.assertEqual(response.headers["Content-Language"], code)
+                self.assertContains(response, heading)
+                self.assertContains(response, f'lang="{code}"')
+                self.assertContains(response, 'id="how-it-works"')
+                self.assertContains(response, 'id="features-title"')
+                self.assertContains(response, 'id="audience-title"')
+                cookie = self.client.cookies[settings.LANGUAGE_COOKIE_NAME]
+                self.assertGreater(int(cookie["max-age"]), 30000000)
+                returning = Client()
+                returning.cookies[settings.LANGUAGE_COOKIE_NAME] = cookie.value
+                self.assertEqual(returning.get(reverse("register")).headers["Content-Language"], code)
+                self.assertEqual(returning.get(reverse("login")).headers["Content-Language"], code)
+
+    def test_registration_logs_in_and_logout_returns_to_public_page(self):
+        for code in ("ru", "en", "tg"):
+            with self.subTest(language=code):
+                self.client = Client()
+                self.choose(code)
+                response = self.client.post(reverse("register"), {
+                    "username": f"new-owner-{code}", "email": f"{code}@example.test", "shop_name": "New shop",
+                    "phone": "", "address": "", "password1": "A-New-Strong-Password!42",
+                    "password2": "A-New-Strong-Password!42",
+                }, follow=True)
+                self.assertEqual(response.redirect_chain[0][0], reverse("home"))
+                self.assertTrue(response.context["user"].is_authenticated)
+                self.assertNotContains(response, 'id="features-title"')
+                self.assertEqual(response.headers["Content-Language"], code)
+                self.assertRedirects(self.client.get(reverse("register")), reverse("home"))
+                response = self.client.post(reverse("logout"), follow=True)
+                self.assertContains(response, 'id="features-title"')
+                self.assertFalse(response.context["user"].is_authenticated)
+                self.assertEqual(response.headers["Content-Language"], code)
+
+    def test_protected_pages_and_safe_next_redirect_for_each_role(self):
+        client_user = User.objects.create_user("language-client", password="A-Strong-Test-Password!42", role=User.Role.CLIENT)
+        self.customer.user = client_user
+        self.customer.save()
+        for code in ("ru", "en", "tg"):
+            for user, destination in [(self.owner, reverse("debt_detail", args=[self.debt.pk])),
+                                      (client_user, reverse("client_debt_detail", args=[self.debt.pk]))]:
+                with self.subTest(language=code, role=user.role):
+                    self.client = Client()
+                    self.choose(code)
+                    response = self.client.get(destination)
+                    self.assertRedirects(response, reverse("login") + "?next=" + destination)
+                    response = self.client.post(reverse("login"), {
+                        "username": user.username, "password": "A-Strong-Test-Password!42", "next": destination,
+                    })
+                    self.assertRedirects(response, destination)
+                    self.assertEqual(self.client.get(destination).headers["Content-Language"], code)
+        self.client.logout()
+        response = self.client.post(reverse("login"), {"username": self.owner.username,
+                         "password": "A-Strong-Test-Password!42", "next": "https://example.invalid/steal"})
+        self.assertRedirects(response, reverse("home"))
+
+    def test_all_private_routes_require_login(self):
+        for url in ["/customers/", "/customers/add/", "/debts/", "/debts/add/",
+                    "/payments/", "/payments/add/", "/employees/", "/employees/add/",
+                    "/actions/", "/my-debts/",
+                    f"/customers/{self.customer.pk}/access/", f"/customers/{self.customer.pk}/delete/",
+                    f"/debts/{self.debt.pk}/edit/"]:
+            with self.subTest(url=url):
+                self.assertRedirects(self.client.get(url), reverse("login") + "?next=" + url)
+
+    def test_translated_forms_errors_and_audit_history(self):
+        event = ActionLog.objects.create(shop=self.shop, user=self.owner,
+                    action="Customer created: %(name)s", details={"name": "Client <b>safe</b>"})
+        for code, required in [("ru", "Обязательное поле."), ("en", "This field is required."),
+                               ("tg", "Пур кардани ин майдон ҳатмист.")]:
+            with self.subTest(language=code):
+                self.client = Client()
+                self.choose(code)
+                response = self.client.post(reverse("register"), {})
+                self.assertContains(response, required)
+                with override(code):
+                    self.assertContains(response, gettext("Shop name"))
+                    expected = gettext("Customer created: %(name)s") % {"name": "Client <b>safe</b>"}
+                    self.assertEqual(event.display_action, expected)
+                self.client.force_login(self.owner)
+                for name in ("customer_list", "debt_list", "payment_list", "employee_list", "action_list", "debt_create"):
+                    response = self.client.get(reverse(name))
+                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(response.headers["Content-Language"], code)
+                self.assertContains(self.client.get(reverse("action_list")), "&lt;b&gt;safe&lt;/b&gt;")
+                response = self.client.post(reverse("payment_create"), {"debt": self.debt.pk, "amount": "200"})
+                with override(code):
+                    self.assertContains(response, gettext("The payment cannot exceed the outstanding balance."))
+
+    def test_language_switch_is_csrf_protected_and_rejects_unknown_languages(self):
+        guarded = Client(enforce_csrf_checks=True)
+        self.assertEqual(guarded.post(reverse("set_language"), {"language": "tg"}).status_code, 403)
+        self.choose("tg")
+        self.choose("unsupported")
+        self.assertEqual(self.client.get("/").headers["Content-Language"], "tg")
+        response = self.client.post(reverse("set_language"), {"language": "ru", "next": "https://example.invalid/"})
+        self.assertNotIn("example.invalid", response.headers.get("Location", ""))
+
+
+    @override_settings(MAILERS={"default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}})
+    def test_password_reset_email_and_legacy_history_follow_language(self):
+        from main.activity import render_action
+        self.owner.email = "owner@example.test"
+        self.owner.save()
+        for code in ("ru", "en", "tg"):
+            with self.subTest(language=code):
+                self.choose(code)
+                response = self.client.post(reverse("password_reset"), {"email": self.owner.email}, follow=True)
+                self.assertEqual(response.status_code, 200)
+                with override(code):
+                    self.assertEqual(mail.outbox[-1].subject, gettext("Qarz password reset"))
+                    self.assertIn(gettext("Open this link:"), mail.outbox[-1].body)
+                    expected = gettext("Cashier created: %(name)s") % {"name": "test-cashier"}
+                    self.assertEqual(render_action("Created cashier: test-cashier", {}), expected)
+                    self.assertEqual(render_action("Создан кассир: %(name)s", {"name": "test-cashier"}), expected)
+
+    @override_settings(DEBUG=False)
+    def test_error_pages_use_selected_language(self):
+        self.choose("tg")
+        response = self.client.get("/missing-page/")
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "Саҳифа ёфт нашуд", status_code=404)
+
+КОНЕЦ ФАЙЛА: main/tests.py
+
+========================================================================
+ФАЙЛ: main/static/main/css/style.css
+========================================================================
+
+:root {
+    --bg:#f5f7f6; --card:#fff; --text:#20372c; --muted:#63776a;
+    --accent:#256347; --soft:#edf4ef; --border:#dce5df; --danger:#ac3434;
+    --button-text:#fff; --shadow:0 4px 20px #173c2608; color-scheme:light;
+}
+[data-theme=dark] {
+    --bg:#132019; --card:#1c2d23; --text:#e7f1eb; --muted:#b2c5b8;
+    --accent:#a2d4b3; --soft:#283d30; --border:#3a5041; --danger:#ffaaaa;
+    --button-text:#132019; --shadow:none; color-scheme:dark;
+}
+* {box-sizing:border-box}
+body {margin:0;background:var(--bg);color:var(--text);font:14px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+a {color:var(--accent);text-decoration:none}
+a:hover {text-decoration:underline}
+button,input,select,textarea {font:inherit}
+button,a,input,select,textarea {touch-action:manipulation}
+:focus-visible {outline:3px solid var(--accent);outline-offset:3px}
+h1,h2,h3,p {overflow-wrap:anywhere}
+h1,h2,h3 {line-height:1.2;letter-spacing:-.025em}
+h1 {font-size:32px;margin:8px 0}
+h2 {font-size:21px}
+h3 {font-size:17px}
+.page-shell,.header-inner {width:min(1180px,calc(100% - 48px));margin:auto}
+.site-header {background:var(--card);border-bottom:1px solid var(--border)}
+.header-inner {min-height:76px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:14px 0}
+.brand {display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;color:var(--text)}
+.brand:hover {text-decoration:none}
+.brand-mark {width:38px;height:38px;display:grid;place-items:center;background:var(--accent);color:var(--button-text);border-radius:11px;font-size:20px}
+.desktop-nav {display:flex;align-items:center;gap:4px;flex:1}
+.desktop-nav a {padding:9px 12px;color:var(--muted);border-radius:8px;font-size:13px;font-weight:600;white-space:nowrap}
+.desktop-nav a:hover,.desktop-nav a.active {background:var(--soft);color:var(--accent);text-decoration:none}
+.header-actions {display:flex;align-items:center;gap:10px;margin-left:auto}
+.header-actions form {margin:0}
+.icon-button,.logout-button {width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text);cursor:pointer}
+.icon-button svg {width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.moon-icon,[data-theme=dark] .sun-icon {display:none}
+[data-theme=dark] .moon-icon {display:block}
+.profile {display:flex;align-items:center;gap:8px;font-size:13px}
+.profile-name {max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.avatar {display:grid;place-items:center;flex-shrink:0;width:34px;height:34px;border-radius:50%;background:var(--soft);color:var(--accent);font-weight:700}
+.button,.header-login {display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 18px;border:1px solid var(--accent);border-radius:9px;background:var(--accent);color:var(--button-text);font-size:13px;font-weight:650;cursor:pointer}
+.button:hover,.header-login:hover {filter:brightness(.94);text-decoration:none}
+.button.secondary {background:var(--card);color:var(--text);border-color:var(--border)}
+.button-full {width:100%}
+.content-page,.dashboard {padding:36px 0 64px}
+.page-heading,.dashboard-heading {display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:28px}
+.page-heading p,.dashboard-heading p {margin:0;color:var(--muted)}
+.overline {font-size:11px;letter-spacing:.12em;font-weight:700;color:var(--accent)!important}
+.dashboard-actions,.confirm-actions,.record-actions {display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.record-actions {margin-top:24px;justify-content:space-between}
+.back-link {display:inline-block;margin-bottom:20px;font-size:13px}
+.stats-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px}
+.stats-grid.three {grid-template-columns:repeat(3,minmax(0,1fr))}
+.stat-card {padding:22px;border:1px solid var(--border);border-radius:14px;background:var(--card);box-shadow:var(--shadow);min-width:0}
+.stat-card.featured {border-color:var(--accent);background:var(--soft)}
+.stat-top {display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.stat-icon {font-size:19px;color:var(--accent)}
+.stat-card>strong {display:block;margin:20px 0 8px;font-size:28px;line-height:1.2;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.stat-card i {font-size:12px;font-style:normal;color:var(--muted)}
+.stat-card small {font-size:12px;color:var(--muted)}
+.table-card {overflow:auto;border:1px solid var(--border);border-radius:12px;background:var(--card);box-shadow:var(--shadow)}
+table {width:100%;border-collapse:collapse;text-align:left}
+th,td {padding:17px 20px;border-bottom:1px solid var(--border);vertical-align:middle}
+th {font-size:12px;font-weight:650;color:var(--muted);background:var(--soft);white-space:nowrap}
+td {font-size:14px;font-variant-numeric:tabular-nums}
+tbody tr:last-child td {border-bottom:0}
+tbody tr:hover {background:var(--soft)}
+td a {font-weight:650}
+.cell-note {display:block;font-size:12px;color:var(--muted);margin-top:3px}
+.empty-row {padding:40px;text-align:center;color:var(--muted)}
+.empty-value,.muted {color:var(--muted)}
+.status {display:inline-block;padding:4px 9px;border-radius:6px;font-size:12px;white-space:nowrap;color:var(--accent);background:var(--soft)}
+.status-unpaid {color:#8b5200;background:#fff0d8}
+.status-partial {color:#65419b;background:#f0e7ff}
+.status-paid {color:#18613c;background:#e2f3e8}
+.status-cancelled {color:#763636;background:#f8e9e9}
+[data-theme=dark] .status-unpaid {color:#ffd294;background:#463520}
+[data-theme=dark] .status-partial {color:#d6bdff;background:#3c2b50}
+[data-theme=dark] .status-paid {color:#acf0c7;background:#23452f}
+[data-theme=dark] .status-cancelled {color:#ffc0c0;background:#482d2d}
+.overdue,.overdue .cell-note {color:var(--danger)}
+.table-section {margin-top:28px}
+.section-row {margin-bottom:14px}
+.section-row h2,.section-row p {margin:0 0 5px}
+.section-row p {color:var(--muted)}
+.pagination {display:flex;justify-content:center;align-items:center;gap:20px;padding-top:24px}
+.filter-bar,.search-form {display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:20px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.filter-bar label {display:grid;gap:5px;font-size:12px;color:var(--muted);flex:1;min-width:130px}
+.filter-bar .back-link {margin:0;padding:10px 0}
+input,select,textarea {width:100%;min-width:0;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);padding:11px 12px}
+textarea {resize:vertical}
+.search-form input,.filter-bar>input {flex:1;min-width:160px}
+.field-group {display:grid;gap:7px}
+.field-group label {font-size:13px;font-weight:600}
+.field-group small,.errorlist {color:var(--danger)}
+.help-text {font-size:12px;color:var(--muted)}
+.help-text ul {padding-left:18px;margin:4px 0}
+.form-page {max-width:600px;margin:auto;padding:36px 0 64px}
+.auth-card {padding:30px;background:var(--card);border:1px solid var(--border);border-radius:15px;box-shadow:var(--shadow)}
+.form-heading {margin-bottom:24px}
+.form-heading p {color:var(--muted)}
+.auth-form {display:grid;gap:18px}
+.auth-footer {padding-top:20px;margin-top:24px;border-top:1px solid var(--border);color:var(--muted)}
+.auth-heading {display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.auth-heading h2,.auth-heading p {margin:0}
+.auth-layout {display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,440px);gap:64px;padding:64px 0;align-items:center}
+.auth-copy h1 {font-size:44px}
+.auth-copy p {color:var(--muted)}
+.form-alert,.message {padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:9px;margin:16px 0}
+.form-alert {color:var(--danger);border-color:var(--danger)}
+.payment-balance {padding:16px;background:var(--soft);border-radius:10px}
+.payment-balance p {margin-top:0}
+.danger-zone {margin-top:24px;text-align:right}
+.danger-zone button,.text-danger,.danger-zone a {color:var(--danger);border:0;background:none;font:inherit;cursor:pointer}
+.person-cell {display:flex;align-items:center;gap:10px}
+.row-action {text-align:right}
+.customer-note {padding:20px;border:1px solid var(--border);border-radius:10px}
+.debt-meta {display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;color:var(--muted);font-size:13px}
+.activity-card {background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.card-title {display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px;border-bottom:1px solid var(--border)}
+.card-title h2,.card-title p {margin:0 0 4px}
+.card-title p {color:var(--muted);font-size:13px}
+.activity-list {padding:0 22px}
+.activity-row {display:flex;align-items:center;gap:14px;padding:20px 0;border-bottom:1px solid var(--border)}
+.activity-row:last-child {border:0}
+.activity-icon {display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--soft);color:var(--accent);flex-shrink:0}
+.activity-info {display:grid;gap:4px;min-width:0}
+.activity-info strong {overflow-wrap:anywhere}
+.activity-info small,.activity-value {font-size:12px;color:var(--muted)}
+.activity-value {margin-left:auto;white-space:nowrap}
+.landing-hero {display:grid;grid-template-columns:1.2fr 1fr;gap:60px;align-items:center;padding:90px 0}
+.hero-copy h1 {font-size:clamp(36px,4.4vw,58px);line-height:1.1;letter-spacing:-.04em;margin:20px 0}
+.hero-copy h1 span,.auth-copy h1 span {color:var(--accent)}
+.lead {font-size:17px;color:var(--muted)}
+.hero-actions {display:flex;gap:12px;margin-top:28px}
+.process-card {background:var(--card);padding:30px;border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
+.process-list>div {display:flex;align-items:center;gap:16px;padding:15px 0;border-top:1px solid var(--border)}
+.process-list p,.process-note p {margin:0;display:grid;gap:4px}
+.process-list small,.process-note small {color:var(--muted)}
+.process-list b {margin-left:auto}
+.process-note {display:flex;gap:16px;background:var(--soft);padding:16px;border-radius:10px}
+.mobile-nav {display:none}
+.language-switcher {display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--border);border-radius:9px;background:var(--bg)}
+.language-switcher button {min-width:34px;min-height:34px;padding:4px;border:0;background:transparent;color:var(--muted);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
+.language-switcher button[aria-pressed=true] {background:var(--accent);color:var(--button-text)}
+.landing-note {font-size:13px;color:var(--muted);margin-top:20px}
+.sample-ledger>div {display:flex;align-items:center;justify-content:space-between;gap:14px;padding:19px 0;border-bottom:1px solid var(--border)}
+.sample-ledger strong {font-size:22px;white-space:nowrap}
+.sample-ledger .sample-total {color:var(--accent);border:0}
+.landing-section {padding:56px 0;border-top:1px solid var(--border);scroll-margin-top:20px}
+.landing-section-heading {max-width:680px;margin-bottom:28px}
+.landing-section-heading h2 {font-size:30px;margin:10px 0 14px}
+.landing-section-heading>p:last-child {color:var(--muted)}
+.landing-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.landing-grid article,.landing-grid li {padding:26px;background:var(--card);border:1px solid var(--border);border-radius:14px}
+.landing-grid h3 {margin:16px 0 12px}
+.landing-grid p {color:var(--muted);margin-bottom:0}
+.feature-number {font-size:12px;font-weight:700;color:var(--accent)}
+.steps-list {padding:0;list-style:none}
+.landing-cta {padding:32px;border:1px solid var(--border);background:var(--soft);border-radius:18px;margin:30px 0}
+.landing-cta h2 {font-size:28px}
+.landing-footer {display:flex;justify-content:space-between;gap:20px;padding:24px 0 40px;color:var(--muted);font-size:12px}
+.landing-footer p {margin:0}
+@media(max-width:760px) {
+    .public-header .header-actions {flex-wrap:wrap;justify-content:flex-end}
+    .landing-grid {grid-template-columns:1fr}
+    .landing-section {padding:34px 0}
+    .landing-section-heading h2 {font-size:26px}
+}
+@media(max-width:600px) {
+    .public-header .brand {flex:1}
+    .public-header .header-actions {display:contents}
+    .public-header .language-switcher {margin-left:auto}
+    .public-header .header-actions>.button,.public-header .header-login {flex:1;min-width:40%;font-size:12px}
+    .header-actions {gap:6px}
+    .profile {display:none}
+    .language-switcher button {min-width:30px}
+    .landing-cta {padding:22px}
+    .landing-footer {flex-direction:column;gap:4px}
+}
+@media(max-width:1000px) {
+    .desktop-nav {order:3;flex-basis:100%;overflow-x:auto}
+    .stats-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+    .auth-layout {gap:30px}
+}
+@media(max-width:760px) {
+    .landing-hero,.auth-layout {grid-template-columns:1fr;gap:32px;padding:40px 0}
+    .auth-copy h1 {font-size:34px}
+    .page-heading,.dashboard-heading {align-items:flex-start;flex-direction:column;gap:16px}
+    .stats-grid.three {grid-template-columns:1fr}
+}
+@media(max-width:600px) {
+    .page-shell,.header-inner {width:calc(100% - 28px)}
+    .header-inner {min-height:64px;gap:10px;padding:12px 0}
+    .desktop-nav,.profile-name {display:none}
+    body:has(.mobile-nav) {padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+    .mobile-nav {position:fixed;z-index:20;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--border);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+    .mobile-nav.owner-nav {display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+    body:has(.mobile-nav.owner-nav) {padding-bottom:calc(140px + env(safe-area-inset-bottom))}
+    .mobile-nav a {flex:1;display:flex;align-items:center;flex-direction:column;padding:6px;color:var(--muted);font-size:11px}
+    .mobile-nav a span {font-size:19px}
+    .mobile-nav .active {color:var(--accent);background:var(--soft);border-radius:8px}
+    .content-page,.dashboard {padding-top:26px}
+    h1 {font-size:28px}
+    .auth-card {padding:22px}
+    .stats-grid {grid-template-columns:1fr}
+    .stat-card>strong {margin-top:12px}
+    .filter-bar {padding:12px}
+    .filter-bar label {flex-basis:calc(50% - 12px)}
+    th,td {padding:14px}
+    .activity-row {flex-wrap:wrap}
+    .activity-value {margin-left:48px}
+    .hero-actions {flex-direction:column}
+    .card-title {align-items:flex-start;flex-direction:column}
+    .confirm-actions .button {flex:1}
+}
+@media(prefers-reduced-motion:reduce) {
+    *,*::before,*::after {scroll-behavior:auto!important;transition:none!important}
+}
+
+КОНЕЦ ФАЙЛА: main/static/main/css/style.css

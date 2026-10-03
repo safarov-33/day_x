@@ -1,0 +1,79 @@
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <a class="back-link" href="{% url 'customer_list' %}">{% translate "← Customers" %}</a>
+        <div class="page-heading">
+            <div>
+                <h1>{{ customer.name }}</h1>
+                <p>{{ customer.phone }} · {{ customer.address|default:_("No address provided") }}</p>
+            </div>
+            <div class="dashboard-actions">
+                <a class="button secondary" href="{% url 'customer_update' customer.pk %}">{% translate "Edit" %}</a>
+                <a class="button" href="{% url 'debt_create' %}?customer={{ customer.pk }}">{% translate "Add debt" %}</a>
+            </div>
+        </div>
+        <div class="stats-grid three">
+            <article class="stat-card">
+                <span>{% translate "Total debt" %}</span>
+                <strong>{{ customer.total_debt|floatformat:2 }} <i>TJS</i></strong>
+            </article>
+            <article class="stat-card">
+                <span>{% translate "Paid" %}</span>
+                <strong>{{ customer.total_paid|floatformat:2 }} <i>TJS</i></strong>
+            </article>
+            <article class="stat-card featured">
+                <span>{% translate "Balance" %}</span>
+                <strong>{{ customer.remaining_debt|floatformat:2 }} <i>TJS</i></strong>
+            </article>
+        </div>
+        <section class="table-section">
+            <div class="section-row">
+                <div>
+                    <h2>{% translate "Customer debts" %}</h2>
+                    <p>{% translate "Debt and payment history" %}</p>
+                </div>
+            </div>
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{% translate "Amount" %}</th>
+                            <th>{% translate "Balance" %}</th>
+                            <th>{% translate "Due date" %}</th>
+                            <th>{% translate "Status" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for debt in customer.debts.all %}
+                            <tr>
+                                <td><a href="{% url 'debt_detail' debt.pk %}">{{ debt.amount|floatformat:2 }} TJS</a></td>
+                                <td>{{ debt.remaining_amount|floatformat:2 }} TJS</td>
+                                <td>{% if debt.due_date %}{{ debt.due_date|date:"d.m.Y" }}{% else %}<span class="empty-value">{% translate "Not set" %}</span>{% endif %}</td>
+                                <td><span class="status status-{{ debt.status }}">{{ debt.get_status_display }}</span></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td class="empty-row" colspan="4">{% translate "This customer has no debts yet" %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% if customer.note %}
+            <p class="customer-note">{{ customer.note|linebreaksbr }}</p>
+        {% endif %}
+        {% if user.role == 'owner' %}
+            <div class="record-actions">
+                {% if not customer.user %}
+                    <a class="button secondary" href="{% url 'client_account_create' customer.pk %}">{% translate "Create customer access" %}</a>
+                {% else %}
+                    <p>{% translate "Account:" %} {{ customer.user.username }}</p>
+                {% endif %}
+                <a class="text-danger" href="{% url 'customer_delete' customer.pk %}">{% if customer.is_archived %}{% translate "Restore from archive" %}{% else %}{% translate "Archive" %}{% endif %}</a>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

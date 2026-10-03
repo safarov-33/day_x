@@ -1,0 +1,37 @@
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Log in" %}{% endblock %}
+{% block content %}
+    <section class="auth-layout">
+        <div class="auth-copy">
+            <p class="overline">{% translate "WELCOME BACK" %}</p>
+            <h1>{% translate "Get back to business" %} <span>{% translate "without the hassle." %}</span></h1>
+            <p>{% translate "Log in to see your business’s debts, payments and customers." %}</p>
+        </div>
+        <div class="auth-card">
+            <div class="auth-heading">
+                <span class="brand-mark">Q</span>
+                <div>
+                    <h2>{% translate "Log in to Qarz" %}</h2>
+                    <p>{% translate "Enter your account details" %}</p>
+                </div>
+            </div>
+            <form class="auth-form" method="post" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="form-alert">
+                        {{ form.non_field_errors|striptags }}
+                    </div>
+                {% endif %}
+                {% include 'main/_field.html' with field=form.username %}
+                {% include 'main/_field.html' with field=form.password %}
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+                <button class="button button-full" type="submit">{% translate "Log in" %} <span>→</span></button>
+            </form>
+            <p><a href="{% url 'password_reset' %}">{% translate "Forgot your password?" %}</a></p>
+            <p class="auth-footer">{% translate "Don’t have an account?" %} <a href="{% url 'register' %}">{% translate "Sign up" %}</a></p>
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+    <section class="form-page">
+        <a class="back-link" href="{% url back_url %}">{% translate "← Back" %}</a>
+        <div class="auth-card">
+            <div class="form-heading">
+                <h1>{{ page_title }}</h1>
+                {% if object %}
+                    <p>{% translate "Edit record" %}</p>
+                {% endif %}
+            </div>
+            {% if notice %}
+                <p>{{ notice }}</p>
+            {% endif %}
+            {% if form %}
+                <form class="auth-form" method="post" novalidate>
+                    {% include 'main/_form.html' %}
+                    {% if payment_form %}
+                        <div class="payment-balance" hidden>
+                            <p>{% translate "Balance:" %} <strong id="balance-value"></strong> TJS</p>
+                            <button type="button" class="button secondary" id="pay-full">{% translate "Pay in full" %}</button>
+                        </div>
+                        {{ debt_balances|json_script:"debt-balances" }}
+                    {% endif %}
+                    <button class="button button-full" type="submit">{% if submit_label %}{{ submit_label }}{% else %}{% translate "Save" %}{% endif %}</button>
+                </form>
+            {% elif validlink == False %}
+                <p>{% translate "This link is invalid or has already been used. Request a new one." %}</p>
+                <a href="{% url 'password_reset' %}">{% translate "Reset password" %}</a>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

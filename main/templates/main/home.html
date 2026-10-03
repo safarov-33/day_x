@@ -1,0 +1,208 @@
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% if user.is_authenticated %}{% translate "Overview" %}{% else %}{% translate "Debt tracking for businesses" %}{% endif %}{% endblock %}
+{% block content %}
+    {% if user.is_authenticated %}
+        <section class="dashboard">
+            <div class="dashboard-heading">
+                <div>
+                    <p class="overline">{% translate "WORKSPACE" %}</p>
+                    <h1>{% translate "Overview" %}</h1>
+                    <p>{% translate "Shop «" %}{{ shop.name|default:_("Not set") }}»</p>
+                </div>
+                <div class="dashboard-actions">
+                    <a class="button secondary" href="{% url 'customer_create' %}"><span>＋</span> {% translate "Add customer" %}</a>
+                    <a class="button" href="{% url 'debt_create' %}"><span>＋</span> {% translate "Add debt" %}</a>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span>{% translate "Customers" %}</span>
+                        <span class="stat-icon">♙</span>
+                    </div>
+                    <strong>{{ customer_count }}</strong>
+                    <small>{% translate "Total shop customers" %}</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span>{% translate "Total debt amount" %}</span>
+                        <span class="stat-icon">↗</span>
+                    </div>
+                    <strong>{{ total_debt|floatformat:2 }} <i>TJS</i></strong>
+                    <small>{% translate "Active debts:" %} {{ active_debt_count }}</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span>{% translate "Received" %}</span>
+                        <span class="stat-icon">✓</span>
+                    </div>
+                    <strong>{{ total_paid|floatformat:2 }} <i>TJS</i></strong>
+                    <small><b>{{ payment_percent }}%</b> {% translate "of the total amount" %}</small>
+                </article>
+                <article class="stat-card featured">
+                    <div class="stat-top">
+                        <span>{% translate "Balance" %}</span>
+                        <span class="stat-icon">◷</span>
+                    </div>
+                    <strong>{{ remaining_debt|floatformat:2 }} <i>TJS</i></strong>
+                    <small>{% translate "Awaiting payment" %}</small>
+                </article>
+            </div>
+            <section class="activity-card">
+                <div class="card-title">
+                    <div>
+                        <h2>{% translate "Recent activity" %}</h2>
+                        <p>{% translate "Debt and payment activity" %}</p>
+                    </div>
+                    {% if user.role == 'owner' %}
+                        <a href="{% url 'action_list' %}">{% translate "All activity →" %}</a>
+                    {% endif %}
+                </div>
+                <div class="activity-list">
+                    {% for item in recent_actions %}
+                        <div class="activity-row">
+                            <span class="activity-icon client">✓</span>
+                            <div class="activity-info">
+                                <strong>{{ item.display_action }}</strong>
+                                <small>{{ item.user.username|default:_("System") }}</small>
+                            </div>
+                            <div class="activity-value">
+                                <small>{{ item.created_at|date:"d.m.Y, H:i" }}</small>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="activity-row">
+                            <span class="activity-icon client">○</span>
+                            <div class="activity-info">
+                                <strong>{% translate "No activity yet" %}</strong>
+                                <small>{% translate "New activity will appear here" %}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </section>
+    {% else %}
+        <section class="landing-hero">
+            <div class="hero-copy">
+                <p class="overline">{% translate "QARZ · DEBT TRACKING FOR BUSINESSES" %}</p>
+                <h1>{% translate "Focus on your customers." %}<br><span>{% translate "Keep track of debts with Qarz." %}</span></h1>
+                <p class="lead">{% translate "Your shop’s customers, debts and payments in one place. Record sales on credit, accept partial payments and always know the outstanding balance." %}</p>
+                <div class="hero-actions">
+                    <a class="button" href="{% url 'register' %}">{% translate "Get started" %} <span aria-hidden="true">→</span></a>
+                    <a class="button secondary" href="#how-it-works">{% translate "How it works" %}</a>
+                </div>
+                <p class="landing-note">{% translate "Explore the features without signing up. Create an account when you’re ready to manage your shop’s records." %}</p>
+            </div>
+            <aside class="process-card" aria-label="{% translate 'Debt tracking example' %}">
+                <p class="overline">{% translate "EXAMPLE" %}</p>
+                <h2>{% translate "Every payment accounted for" %}</h2>
+                <div class="sample-ledger">
+                    <div>
+                        <span>{% translate "Debt amount" %}</span>
+                        <strong>1 000 TJS</strong>
+                    </div>
+                    <div>
+                        <span>{% translate "Received" %}</span>
+                        <strong>400 TJS</strong>
+                    </div>
+                    <div class="sample-total">
+                        <span>{% translate "Outstanding balance" %}</span>
+                        <strong>600 TJS</strong>
+                    </div>
+                </div>
+                <p class="landing-note">{% translate "Example figures. Your balance is calculated automatically from recorded payments." %}</p>
+            </aside>
+        </section>
+        <section class="landing-section" aria-labelledby="audience-title">
+            <div class="landing-section-heading">
+                <p class="overline">{% translate "FOR EVERYDAY WORK" %}</p>
+                <h2 id="audience-title">{% translate "For businesses that sell on credit" %}</h2>
+                <p>{% translate "For shops and small sales teams that need a clear overview and a reliable record of customer agreements." %}</p>
+            </div>
+            <div class="landing-grid">
+                <article>
+                    <span class="feature-number">01</span>
+                    <h3>{% translate "For shop owners" %}</h3>
+                    <p>{% translate "Keep an eye on total debt, incoming payments and cashier activity." %}</p>
+                </article>
+                <article>
+                    <span class="feature-number">02</span>
+                    <h3>{% translate "For cashiers" %}</h3>
+                    <p>{% translate "Find customers quickly, record debts and log every payment." %}</p>
+                </article>
+                <article>
+                    <span class="feature-number">03</span>
+                    <h3>{% translate "For customers" %}</h3>
+                    <p>{% translate "View your debts, due dates and payment history in your account. Your shop provides access." %}</p>
+                </article>
+            </div>
+        </section>
+        <section class="landing-section" aria-labelledby="features-title">
+            <div class="landing-section-heading">
+                <p class="overline">{% translate "FEATURES" %}</p>
+                <h2 id="features-title">{% translate "Organized records. Clear balances." %}</h2>
+            </div>
+            <div class="landing-grid">
+                <article>
+                    <h3>{% translate "Customers and contacts" %}</h3>
+                    <p>{% translate "Names, phone numbers, addresses and notes alongside each customer’s debt history." %}</p>
+                </article>
+                <article>
+                    <h3>{% translate "Due dates and overdue debts" %}</h3>
+                    <p>{% translate "Set due dates and use filters to find overdue debts." %}</p>
+                </article>
+                <article>
+                    <h3>{% translate "Partial payments" %}</h3>
+                    <p>{% translate "Accept partial or full payments. The outstanding balance updates automatically." %}</p>
+                </article>
+                <article>
+                    <h3>{% translate "Role-based access" %}</h3>
+                    <p>{% translate "Owners manage the shop, cashiers record transactions and customers see only their own debts." %}</p>
+                </article>
+                <article>
+                    <h3>{% translate "History and archive" %}</h3>
+                    <p>{% translate "Review staff activity and archive customers while keeping their records." %}</p>
+                </article>
+            </div>
+        </section>
+        <section class="landing-section" id="how-it-works" aria-labelledby="steps-title">
+            <div class="landing-section-heading">
+                <p class="overline">{% translate "HOW IT WORKS" %}</p>
+                <h2 id="steps-title">{% translate "Three steps to clear records" %}</h2>
+            </div>
+            <ol class="landing-grid steps-list">
+                <li>
+                    <span class="feature-number">01</span>
+                    <h3>{% translate "Set up your shop" %}</h3>
+                    <p>{% translate "Sign up, enter your shop’s name and add cashiers if needed." %}</p>
+                </li>
+                <li>
+                    <span class="feature-number">02</span>
+                    <h3>{% translate "Add a customer and a debt" %}</h3>
+                    <p>{% translate "Enter contact details, the amount, a description and the due date." %}</p>
+                </li>
+                <li>
+                    <span class="feature-number">03</span>
+                    <h3>{% translate "Record payments" %}</h3>
+                    <p>{% translate "Accept payments and track balances in the overview and customer details." %}</p>
+                </li>
+            </ol>
+        </section>
+        <section class="landing-cta">
+            <div>
+                <h2>{% translate "Keep your records close at hand" %}</h2>
+                <p>{% translate "Create an account and start managing your shop’s records." %}</p>
+            </div>
+            <div class="hero-actions">
+                <a class="button" href="{% url 'register' %}">{% translate "Get started" %}</a>
+                <a class="button secondary" href="{% url 'login' %}">{% translate "Already have an account? Log in" %}</a>
+            </div>
+        </section>
+        <footer class="landing-footer">
+            <span>Qarz · TJS</span>
+            <p>{% translate "Debt tracking everyone can understand." %}</p>
+        </footer>
+    {% endif %}
+{% endblock %}

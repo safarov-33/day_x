@@ -1,0 +1,88 @@
+{% load static i18n %}
+{% get_current_language as CURRENT_LANGUAGE %}
+<!DOCTYPE html>
+<html lang="{{ CURRENT_LANGUAGE }}" data-theme="light">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="{% translate 'Qarz — simple debt tracking for small businesses.' %}">
+        <title>{% block title %}Qarz{% endblock %} · Qarz</title>
+        <script>
+            try {
+                const savedTheme = localStorage.getItem('qarz-theme');
+                if (savedTheme === 'dark' || savedTheme === 'light') document.documentElement.dataset.theme = savedTheme;
+            } catch (error) {  }
+        </script>
+        <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
+    </head>
+    <body>
+        <header class="site-header">
+            <div class="header-inner{% if not user.is_authenticated %} public-header{% endif %}">
+                <a class="brand" href="{% url 'home' %}" aria-label="{% translate 'Qarz — home' %}"> <span class="brand-mark">Q</span><span>Qarz</span> </a>
+                {% if user.is_authenticated %}
+                    <nav class="desktop-nav" aria-label="{% translate 'Main navigation' %}">
+                        {% if user.role == 'client' %}
+                            <a href="{% url 'client_debt_list' %}"{% if request.resolver_match.url_name == 'client_debt_list' or request.resolver_match.url_name == 'client_debt_detail' %} class="active"{% endif %}>{% translate "My debts" %}</a>
+                        {% else %}
+                            <a href="{% url 'home' %}"{% if request.resolver_match.url_name == 'home' %} class="active"{% endif %}>{% translate "Overview" %}</a>
+                            <a href="{% url 'customer_list' %}"{% if 'customer' in request.resolver_match.url_name %} class="active"{% endif %}>{% translate "Customers" %}</a>
+                            <a href="{% url 'debt_list' %}"{% if request.resolver_match.url_name == 'debt_list' or request.resolver_match.url_name == 'debt_create' or request.resolver_match.url_name == 'debt_detail' or request.resolver_match.url_name == 'debt_update' or request.resolver_match.url_name == 'debt_cancel' %} class="active"{% endif %}>{% translate "Debts" %}</a>
+                            <a href="{% url 'payment_list' %}"{% if 'payment' in request.resolver_match.url_name %} class="active"{% endif %}>{% translate "Payments" %}</a>
+                            {% if user.role == 'owner' %}
+                                <a href="{% url 'employee_list' %}"{% if 'employee' in request.resolver_match.url_name %} class="active"{% endif %}>{% translate "Staff" %}</a>
+                                <a href="{% url 'action_list' %}"{% if request.resolver_match.url_name == 'action_list' %} class="active"{% endif %}>{% translate "History" %}</a>
+                            {% endif %}
+                        {% endif %}
+                    </nav>
+                {% endif %}
+                <div class="header-actions">
+                    <form class="language-switcher" action="{% url 'set_language' %}" method="post" aria-label="{% translate 'Interface language' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit" name="language" value="ru" lang="ru" aria-label="{% translate 'Русский' %}" {% if CURRENT_LANGUAGE == 'ru' %}aria-pressed="true"{% else %}aria-pressed="false"{% endif %}>RU</button>
+                        <button type="submit" name="language" value="en" lang="en" aria-label="English" {% if CURRENT_LANGUAGE == 'en' %}aria-pressed="true"{% else %}aria-pressed="false"{% endif %}>EN</button>
+                        <button type="submit" name="language" value="tg" lang="tg" aria-label="{% translate 'Тоҷикӣ' %}" {% if CURRENT_LANGUAGE == 'tg' %}aria-pressed="true"{% else %}aria-pressed="false"{% endif %}>TJ</button>
+                    </form>
+                    <button class="icon-button theme-toggle" type="button" aria-label="{% translate 'Switch theme' %}">
+                        <svg class="sun-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+                        <svg class="moon-icon" viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z"/></svg>
+                    </button>
+                    {% if user.is_authenticated %}
+                        <div class="profile">
+                            <span class="avatar">{{ user.username|first|upper }}</span>
+                            <span class="profile-name">{{ user.username }}</span>
+                        </div>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="logout-button" type="submit" aria-label="{% translate 'Log out' %}">↗</button>
+                        </form>
+                    {% else %}
+                        <a class="button secondary" href="{% url 'login' %}">{% translate "Log in" %}</a>
+                        <a class="header-login" href="{% url 'register' %}">{% translate "Sign up" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+        <main class="page-shell">
+            {% block content %}
+            {% endblock %}
+        </main>
+        {% if user.is_authenticated %}
+            <nav class="mobile-nav{% if user.role == 'owner' %} owner-nav{% endif %}" aria-label="{% translate 'Mobile navigation' %}">
+                {% if user.role == 'client' %}
+                    <a class="active" href="{% url 'client_debt_list' %}"><span>▤</span>{% translate "My debts" %}</a>
+                {% else %}
+                    <a href="{% url 'home' %}"><span>⌂</span>{% translate "Overview" %}</a>
+                    <a href="{% url 'customer_list' %}"><span>♙</span>{% translate "Customers" %}</a>
+                    <a href="{% url 'debt_list' %}"><span>▤</span>{% translate "Debts" %}</a>
+                    <a href="{% url 'payment_list' %}"><span>✓</span>{% translate "Payments" %}</a>
+                    {% if user.role == 'owner' %}
+                        <a href="{% url 'employee_list' %}"{% if 'employee' in request.resolver_match.url_name %} class="active"{% endif %}><span>♙</span>{% translate "Staff" %}</a>
+                        <a href="{% url 'action_list' %}"{% if request.resolver_match.url_name == 'action_list' %} class="active"{% endif %}><span>◷</span>{% translate "History" %}</a>
+                    {% endif %}
+                {% endif %}
+            </nav>
+        {% endif %}
+        <script src="{% static 'main/js/theme.js' %}"></script>
+    </body>
+</html>

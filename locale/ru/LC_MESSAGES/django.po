@@ -1,0 +1,1246 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Qarz\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 10:14+0500\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: main/activity.py:5 main/tests.py:262
+#, python-format
+msgid "Customer created: %(name)s"
+msgstr "Создан клиент: %(name)s"
+
+#: main/activity.py:6
+#, python-format
+msgid "Customer updated: %(name)s"
+msgstr "Изменён клиент: %(name)s"
+
+#: main/activity.py:7
+#, python-format
+msgid "Customer archive status changed: %(name)s"
+msgstr "Изменён архивный статус клиента: %(name)s"
+
+#: main/activity.py:8
+#, python-format
+msgid "Debt created: %(amount)s TJS, customer: %(name)s"
+msgstr "Создан долг: %(amount)s TJS, клиент: %(name)s"
+
+#: main/activity.py:9
+#, python-format
+msgid "Debt updated: %(id)s"
+msgstr "Изменён долг: %(id)s"
+
+#: main/activity.py:10
+#, python-format
+msgid "Debt cancelled: %(id)s"
+msgstr "Отменён долг: %(id)s"
+
+#: main/activity.py:11
+#, python-format
+msgid "Payment received: %(amount)s TJS, customer: %(name)s"
+msgstr "Принят платёж: %(amount)s TJS, клиент: %(name)s"
+
+#: main/activity.py:12
+#, python-format
+msgid "Cashier created: %(name)s"
+msgstr "Создан кассир: %(name)s"
+
+#: main/activity.py:13
+#, python-format
+msgid "Cashier access changed: %(name)s"
+msgstr "Изменён доступ кассира: %(name)s"
+
+#: main/error_views.py:6
+msgid "Access denied"
+msgstr "Доступ запрещён"
+
+#: main/error_views.py:7
+msgid "Your account does not have access to this page."
+msgstr "У вашего аккаунта нет доступа к этой странице."
+
+#: main/error_views.py:11
+msgid "Page not found"
+msgstr "Страница не найдена"
+
+#: main/error_views.py:12
+msgid "Check the address or return to the home page."
+msgstr "Проверьте адрес или вернитесь на главную."
+
+#: main/error_views.py:16
+msgid "Unable to open this page"
+msgstr "Не удалось открыть страницу"
+
+#: main/error_views.py:17
+msgid "Please try again later."
+msgstr "Попробуйте ещё раз немного позже."
+
+#: main/error_views.py:21
+msgid "Refresh the page"
+msgstr "Обновите страницу"
+
+#: main/error_views.py:22
+msgid "This form session has expired. Refresh the page and submit it again."
+msgstr "Сеанс формы истёк. Обновите страницу и повторите отправку."
+
+#: main/forms.py:13 main/templates/main/customer_list.html:4
+msgid "Name"
+msgstr "Имя"
+
+#: main/forms.py:13 main/forms.py:29 main/forms.py:81
+#: main/templates/main/customer_list.html:4 main/views.py:480
+msgid "Phone"
+msgstr "Телефон"
+
+#: main/forms.py:13 main/forms.py:29 main/forms.py:82
+msgid "Address"
+msgstr "Адрес"
+
+#: main/forms.py:13
+msgid "Note"
+msgstr "Заметка"
+
+#: main/forms.py:21 main/templates/main/debt_detail.html:1 main/views.py:255
+#: main/views.py:294
+msgid "Debt"
+msgstr "Долг"
+
+#: main/forms.py:21
+msgid "Payment amount"
+msgstr "Сумма платежа"
+
+#: main/forms.py:29 main/forms.py:79 main/tests.py:261
+msgid "Shop name"
+msgstr "Название магазина"
+
+#: main/forms.py:33 main/forms.py:80 main/forms.py:101
+msgid "Email address"
+msgstr "Электронная почта"
+
+#: main/forms.py:47
+msgid "This customer already has an account."
+msgstr "Клиенту уже выдан доступ."
+
+#: main/forms.py:61 main/models.py:19 main/templates/main/debt_list.html:8
+#: main/templates/main/debt_list.html:17
+#: main/templates/main/payment_list.html:2 main/views.py:170 main/views.py:193
+#: main/views.py:480
+msgid "Customer"
+msgstr "Клиент"
+
+#: main/forms.py:62 main/templates/main/customer_detail.html:4
+#: main/templates/main/debt_detail.html:3
+#: main/templates/main/debt_detail.html:4 main/templates/main/debt_list.html:17
+#: main/templates/main/payment_list.html:2 main/views.py:480
+msgid "Amount"
+msgstr "Сумма"
+
+#: main/forms.py:63
+msgid "Description"
+msgstr "Описание"
+
+#: main/forms.py:64 main/templates/main/customer_detail.html:4
+#: main/templates/main/debt_list.html:17 main/views.py:480
+msgid "Due date"
+msgstr "Срок оплаты"
+
+#: main/forms.py:68
+msgid "What is this debt for?"
+msgstr "За что оформлен долг"
+
+#: main/i18n_messages.py:5 main/templates/main/employee_list.html:2
+#: main/templates/main/login.html:9
+msgid "Username"
+msgstr "Имя пользователя"
+
+#: main/i18n_messages.py:6
+#, fuzzy
+#| msgid "Username"
+msgid "username"
+msgstr "Имя пользователя"
+
+#: main/i18n_messages.py:7 main/templates/main/login.html:10
+msgid "Password"
+msgstr "Пароль"
+
+#: main/i18n_messages.py:8
+#, fuzzy
+#| msgid "Password changed"
+msgid "Password confirmation"
+msgstr "Пароль изменён"
+
+#: main/i18n_messages.py:9 main/urls.py:15
+msgid "New password"
+msgstr "Новый пароль"
+
+#: main/i18n_messages.py:10
+#, fuzzy
+#| msgid "New password"
+msgid "New password confirmation"
+msgstr "Новый пароль"
+
+#: main/i18n_messages.py:11
+msgid "Email"
+msgstr ""
+
+#: main/i18n_messages.py:12
+#, fuzzy
+#| msgid "Email address"
+msgid "email address"
+msgstr "Электронная почта"
+
+#: main/i18n_messages.py:13
+#, fuzzy
+#| msgid "Customer name"
+msgid "first name"
+msgstr "Имя клиента"
+
+#: main/i18n_messages.py:14
+#, fuzzy
+#| msgid "Customer name"
+msgid "last name"
+msgstr "Имя клиента"
+
+#: main/i18n_messages.py:15
+msgid "Enter the same password as before, for verification."
+msgstr ""
+
+#: main/i18n_messages.py:16
+msgid "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+msgstr ""
+
+#: main/i18n_messages.py:17
+msgid "Your password can’t be too similar to your other personal information."
+msgstr ""
+
+#: main/i18n_messages.py:18
+msgid "Your password can’t be a commonly used password."
+msgstr ""
+
+#: main/i18n_messages.py:19
+msgid "Your password can’t be entirely numeric."
+msgstr ""
+
+#: main/i18n_messages.py:20
+#, python-format
+msgid "The password is too similar to the %(verbose_name)s."
+msgstr ""
+
+#: main/i18n_messages.py:21
+msgid "This password is too common."
+msgstr ""
+
+#: main/i18n_messages.py:22
+msgid "This password is entirely numeric."
+msgstr ""
+
+#: main/i18n_messages.py:23
+msgid "The two password fields didn’t match."
+msgstr ""
+
+#: main/i18n_messages.py:24
+msgid "This account is inactive."
+msgstr ""
+
+#: main/i18n_messages.py:25
+#, python-format
+msgid ""
+"Please enter a correct %(username)s and password. Note that both fields may "
+"be case-sensitive."
+msgstr ""
+
+#: main/i18n_messages.py:26
+msgid "A user with that username already exists."
+msgstr ""
+
+#: main/i18n_messages.py:27
+msgid ""
+"Enter a valid username. This value may contain only letters, numbers, and "
+"@/./+/-/_ characters."
+msgstr ""
+
+#: main/i18n_messages.py:28
+#, fuzzy
+#| msgid "This debt is overdue"
+msgid "This field is required."
+msgstr "Срок оплаты истёк"
+
+#: main/i18n_messages.py:29
+#, fuzzy
+#| msgid "This debt cannot be cancelled."
+msgid "This field cannot be blank."
+msgstr "Этот долг нельзя отменить."
+
+#: main/i18n_messages.py:30
+msgid "Enter a valid value."
+msgstr ""
+
+#: main/i18n_messages.py:31
+#, fuzzy
+#| msgid "Email address"
+msgid "Enter a valid email address."
+msgstr "Электронная почта"
+
+#: main/i18n_messages.py:32
+msgid "Enter a valid date."
+msgstr ""
+
+#: main/i18n_messages.py:33
+msgid "Enter a number."
+msgstr ""
+
+#: main/i18n_messages.py:34
+#, fuzzy
+#| msgid "Name or phone number"
+msgid "Enter a whole number."
+msgstr "Имя или телефон"
+
+#: main/i18n_messages.py:35
+msgid "Enter a valid integer."
+msgstr ""
+
+#: main/i18n_messages.py:36
+msgid "Select a valid choice. That choice is not one of the available choices."
+msgstr ""
+
+#: main/i18n_messages.py:37
+#, python-format
+msgid "Select a valid choice. %(value)s is not one of the available choices."
+msgstr ""
+
+#: main/i18n_messages.py:38
+#, python-format
+msgid "Ensure this value is greater than or equal to %(limit_value)s."
+msgstr ""
+
+#: main/i18n_messages.py:39
+#, python-format
+msgid "Ensure this value is less than or equal to %(limit_value)s."
+msgstr ""
+
+#: main/i18n_messages.py:45
+#, python-format
+msgid "Your password must contain at least %(min_length)d character."
+msgid_plural "Your password must contain at least %(min_length)d characters."
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
+#: main/i18n_messages.py:46
+#, python-format
+msgid "This password is too short. It must contain at least %d character."
+msgid_plural ""
+"This password is too short. It must contain at least %d characters."
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
+#: main/i18n_messages.py:47
+#, python-format
+msgid ""
+"Ensure this value has at most %(limit_value)d character (it has "
+"%(show_value)d)."
+msgid_plural ""
+"Ensure this value has at most %(limit_value)d characters (it has "
+"%(show_value)d)."
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
+#: main/i18n_messages.py:48
+#, python-format
+msgid ""
+"Ensure this value has at least %(limit_value)d character (it has "
+"%(show_value)d)."
+msgid_plural ""
+"Ensure this value has at least %(limit_value)d characters (it has "
+"%(show_value)d)."
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
+#: main/i18n_messages.py:49
+#, python-format
+msgid "Ensure that there are no more than %(max)s digit in total."
+msgid_plural "Ensure that there are no more than %(max)s digits in total."
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
+#: main/i18n_messages.py:50
+#, python-format
+msgid "Ensure that there are no more than %(max)s decimal place."
+msgid_plural "Ensure that there are no more than %(max)s decimal places."
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
+#: main/i18n_messages.py:51
+#, python-format
+msgid ""
+"Ensure that there are no more than %(max)s digit before the decimal point."
+msgid_plural ""
+"Ensure that there are no more than %(max)s digits before the decimal point."
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
+#: main/models.py:17
+msgid "Owner"
+msgstr "Владелец"
+
+#: main/models.py:18 main/templates/main/employee_list.html:2
+msgid "Cashier"
+msgstr "Кассир"
+
+#: main/models.py:75
+msgid "Unpaid"
+msgstr "Не оплачен"
+
+#: main/models.py:76
+msgid "Partially paid"
+msgstr "Частично оплачен"
+
+#: main/models.py:77 main/templates/main/customer_detail.html:3
+#: main/templates/main/debt_detail.html:3 main/templates/main/debt_list.html:10
+#: main/views.py:480
+msgid "Paid"
+msgstr "Оплаченные"
+
+#: main/models.py:78 main/templates/main/debt_list.html:10
+msgid "Cancelled"
+msgstr "Отменённые"
+
+#: main/models.py:106
+msgid "The debt amount cannot be less than the payments already received."
+msgstr "Сумма долга не может быть меньше полученных платежей."
+
+#: main/models.py:110
+msgid "A debt with payments cannot be cancelled."
+msgstr "Нельзя отменить долг с платежами."
+
+#: main/models.py:152
+msgid "Payments cannot be accepted for a cancelled debt."
+msgstr "Нельзя принять платёж по отменённому долгу."
+
+#: main/models.py:164 main/tests.py:272
+msgid "The payment cannot exceed the outstanding balance."
+msgstr "Платёж не может превышать остаток долга."
+
+#: main/templates/main/_pagination.html:3
+msgid "Pages"
+msgstr "Страницы"
+
+#: main/templates/main/_pagination.html:4
+#: main/templates/main/confirm_delete.html:2
+#: main/templates/main/form_page.html:5
+msgid "← Back"
+msgstr "← Назад"
+
+#: main/templates/main/_pagination.html:6
+msgid "Next →"
+msgstr "Далее →"
+
+#: main/templates/main/action_log_list.html:1
+#: main/templates/main/action_log_list.html:2
+msgid "Activity log"
+msgstr "Журнал действий"
+
+#: main/templates/main/action_log_list.html:2
+msgid "HISTORY"
+msgstr "ИСТОРИЯ"
+
+#: main/templates/main/action_log_list.html:2
+msgid "Action"
+msgstr "Действие"
+
+#: main/templates/main/action_log_list.html:2
+msgid "User"
+msgstr "Пользователь"
+
+#: main/templates/main/action_log_list.html:2
+#: main/templates/main/debt_detail.html:4
+#: main/templates/main/payment_list.html:2
+msgid "Date"
+msgstr "Дата"
+
+#: main/templates/main/action_log_list.html:2 main/templates/main/home.html:22
+msgid "System"
+msgstr "Система"
+
+#: main/templates/main/action_log_list.html:2 main/templates/main/home.html:28
+msgid "No activity yet"
+msgstr "Операций пока нет"
+
+#: main/templates/main/base.html:8
+msgid "Qarz — simple debt tracking for small businesses."
+msgstr "Qarz — простой учёт долгов для малого бизнеса."
+
+#: main/templates/main/base.html:21
+msgid "Qarz — home"
+msgstr "Qarz — главная"
+
+#: main/templates/main/base.html:25
+msgid "Main navigation"
+msgstr "Основная навигация"
+
+#: main/templates/main/base.html:27 main/templates/main/base.html:65
+#: main/templates/main/debt_list.html:5
+msgid "My debts"
+msgstr "Мои долги"
+
+#: main/templates/main/base.html:29 main/templates/main/base.html:67
+#: main/templates/main/home.html:2 main/templates/main/home.html:7
+msgid "Overview"
+msgstr "Обзор"
+
+#: main/templates/main/base.html:30 main/templates/main/base.html:68
+#: main/templates/main/customer_list.html:1
+#: main/templates/main/customer_list.html:2 main/templates/main/home.html:11
+msgid "Customers"
+msgstr "Клиенты"
+
+#: main/templates/main/base.html:31 main/templates/main/base.html:69
+#: main/templates/main/debt_list.html:2 main/templates/main/debt_list.html:5
+msgid "Debts"
+msgstr "Долги"
+
+#: main/templates/main/base.html:32 main/templates/main/base.html:70
+#: main/templates/main/payment_list.html:1
+#: main/templates/main/payment_list.html:2
+msgid "Payments"
+msgstr "Платежи"
+
+#: main/templates/main/base.html:33 main/templates/main/base.html:57
+#: main/templates/main/employee_list.html:1
+#: main/templates/main/employee_list.html:2
+msgid "Staff"
+msgstr "Сотрудники"
+
+#: main/templates/main/base.html:38
+msgid "Interface language"
+msgstr "Язык интерфейса"
+
+#: main/templates/main/base.html:40
+msgid "Русский"
+msgstr "Русский"
+
+#: main/templates/main/base.html:42
+msgid "Тоҷикӣ"
+msgstr "Тоҷикӣ"
+
+#: main/templates/main/base.html:44
+msgid "Switch theme"
+msgstr "Переключить тему"
+
+#: main/templates/main/base.html:50
+msgid "Log out"
+msgstr "Выйти"
+
+#: main/templates/main/base.html:52 main/templates/main/login.html:2
+#: main/templates/main/login.html:11
+msgid "Log in"
+msgstr "Вход"
+
+#: main/templates/main/base.html:52 main/templates/main/login.html:12
+#: main/views.py:136
+msgid "Sign up"
+msgstr "Зарегистрироваться"
+
+#: main/templates/main/base.html:57
+msgid "History"
+msgstr "История"
+
+#: main/templates/main/base.html:63
+msgid "Mobile navigation"
+msgstr "Мобильная навигация"
+
+#: main/templates/main/confirm_delete.html:1
+msgid "Customer archive"
+msgstr "Архив клиента"
+
+#: main/templates/main/confirm_delete.html:2
+msgid "Restore this customer?"
+msgstr "Вернуть клиента?"
+
+#: main/templates/main/confirm_delete.html:2
+msgid "Archive this customer?"
+msgstr "Архивировать клиента?"
+
+#: main/templates/main/confirm_delete.html:2
+msgid ""
+"». All debts and payments will be kept. You can restore this customer later."
+msgstr "». Все долги и платежи сохранятся. Архивирование можно отменить."
+
+#: main/templates/main/confirm_delete.html:2
+msgid "Back"
+msgstr "Назад"
+
+#: main/templates/main/confirm_delete.html:2
+msgid "Confirm"
+msgstr "Подтвердить"
+
+#: main/templates/main/customer_detail.html:2
+msgid "← Customers"
+msgstr "← Клиенты"
+
+#: main/templates/main/customer_detail.html:2
+msgid "No address provided"
+msgstr "Адрес не указан"
+
+#: main/templates/main/customer_detail.html:2
+#: main/templates/main/debt_detail.html:2
+msgid "Edit"
+msgstr "Изменить"
+
+#: main/templates/main/customer_detail.html:2 main/templates/main/home.html:8
+msgid "Add debt"
+msgstr "Добавить долг"
+
+#: main/templates/main/customer_detail.html:3
+#: main/templates/main/customer_list.html:4
+msgid "Total debt"
+msgstr "Общий долг"
+
+#: main/templates/main/customer_detail.html:3
+#: main/templates/main/customer_detail.html:4
+#: main/templates/main/customer_list.html:4
+#: main/templates/main/debt_detail.html:3 main/templates/main/debt_list.html:17
+#: main/templates/main/home.html:14 main/views.py:480
+msgid "Balance"
+msgstr "Остаток"
+
+#: main/templates/main/customer_detail.html:4
+msgid "Customer debts"
+msgstr "Долги клиента"
+
+#: main/templates/main/customer_detail.html:4
+msgid "Debt and payment history"
+msgstr "История начислений и оплат"
+
+#: main/templates/main/customer_detail.html:4
+#: main/templates/main/debt_list.html:9 main/templates/main/debt_list.html:17
+#: main/templates/main/employee_list.html:2 main/views.py:480
+msgid "Status"
+msgstr "Статус"
+
+#: main/templates/main/customer_detail.html:4
+#: main/templates/main/debt_list.html:19 main/templates/main/home.html:7
+msgid "Not set"
+msgstr "Не указан"
+
+#: main/templates/main/customer_detail.html:4
+msgid "This customer has no debts yet"
+msgstr "У клиента пока нет долгов"
+
+#: main/templates/main/customer_detail.html:7
+msgid "Create customer access"
+msgstr "Выдать доступ клиенту"
+
+#: main/templates/main/customer_detail.html:7
+msgid "Account:"
+msgstr "Аккаунт:"
+
+#: main/templates/main/customer_detail.html:8
+msgid "Restore from archive"
+msgstr "Вернуть из архива"
+
+#: main/templates/main/customer_detail.html:8
+#: main/templates/main/customer_list.html:3
+msgid "Archive"
+msgstr "Архив"
+
+#: main/templates/main/customer_list.html:2
+msgid "SHOP"
+msgstr "МАГАЗИН"
+
+#: main/templates/main/customer_list.html:2
+msgid "＋ Add customer"
+msgstr "＋ Добавить клиента"
+
+#: main/templates/main/customer_list.html:3
+msgid "Current customers"
+msgstr "Текущие клиенты"
+
+#: main/templates/main/customer_list.html:3
+msgid "Name or phone number"
+msgstr "Имя или телефон"
+
+#: main/templates/main/customer_list.html:3
+#: main/templates/main/debt_list.html:14
+#: main/templates/main/employee_list.html:2
+#: main/templates/main/payment_list.html:2
+msgid "Search"
+msgstr "Найти"
+
+#: main/templates/main/customer_list.html:5
+msgid "No customers yet"
+msgstr "Клиентов пока нет"
+
+#: main/templates/main/debt_detail.html:2
+msgid "← Debts"
+msgstr "← Долги"
+
+#: main/templates/main/debt_detail.html:2
+msgid "DEBT #"
+msgstr "ДОЛГ #"
+
+#: main/templates/main/debt_detail.html:2
+msgid "No description"
+msgstr "Без описания"
+
+#: main/templates/main/debt_detail.html:2
+msgid "Created"
+msgstr "Создан"
+
+#: main/templates/main/debt_detail.html:2
+msgid "Due:"
+msgstr "Срок:"
+
+#: main/templates/main/debt_detail.html:2
+msgid "not set"
+msgstr "не указан"
+
+#: main/templates/main/debt_detail.html:2 main/views.py:338
+msgid "Accept payment"
+msgstr "Принять платёж"
+
+#: main/templates/main/debt_detail.html:3
+msgid "This debt is overdue"
+msgstr "Срок оплаты истёк"
+
+#: main/templates/main/debt_detail.html:4
+msgid "Payment history"
+msgstr "История платежей"
+
+#: main/templates/main/debt_detail.html:4
+#: main/templates/main/payment_list.html:2
+msgid "Accepted by"
+msgstr "Принял"
+
+#: main/templates/main/debt_detail.html:4
+#: main/templates/main/payment_list.html:3
+msgid "No payments yet"
+msgstr "Платежей пока нет"
+
+#: main/templates/main/debt_detail.html:5
+msgid "Cancel debt"
+msgstr "Отменить долг"
+
+#: main/templates/main/debt_list.html:5
+msgid "RECORDS"
+msgstr "УЧЁТ"
+
+#: main/templates/main/debt_list.html:5
+msgid "Amounts, due dates and payment history"
+msgstr "Суммы, сроки и история оплаты"
+
+#: main/templates/main/debt_list.html:5
+msgid "＋ Add debt"
+msgstr "＋ Добавить долг"
+
+#: main/templates/main/debt_list.html:8
+msgid "Search by name"
+msgstr "Поиск по имени"
+
+#: main/templates/main/debt_list.html:10
+msgid "All"
+msgstr "Все"
+
+#: main/templates/main/debt_list.html:10
+#: main/templates/main/employee_list.html:2
+msgid "Active"
+msgstr "Активен"
+
+#: main/templates/main/debt_list.html:10 main/templates/main/debt_list.html:19
+msgid "Overdue"
+msgstr "Просрочен"
+
+#: main/templates/main/debt_list.html:12
+msgid "Due from"
+msgstr "Срок от"
+
+#: main/templates/main/debt_list.html:13
+msgid "Due until"
+msgstr "Срок до"
+
+#: main/templates/main/debt_list.html:14
+msgid "Reset"
+msgstr "Сбросить"
+
+#: main/templates/main/debt_list.html:19
+msgid "dated"
+msgstr "от"
+
+#: main/templates/main/debt_list.html:20
+msgid "No debts found"
+msgstr "Долги не найдены"
+
+#: main/templates/main/employee_list.html:2
+msgid "TEAM"
+msgstr "КОМАНДА"
+
+#: main/templates/main/employee_list.html:2
+msgid "Manage cashier access"
+msgstr "Управление доступом кассиров"
+
+#: main/templates/main/employee_list.html:2
+msgid "＋ Add cashier"
+msgstr "＋ Добавить кассира"
+
+#: main/templates/main/employee_list.html:2
+msgid "Search staff"
+msgstr "Поиск сотрудника"
+
+#: main/templates/main/employee_list.html:2
+msgid "Staff member"
+msgstr "Сотрудник"
+
+#: main/templates/main/employee_list.html:2
+msgid "Role"
+msgstr "Роль"
+
+#: main/templates/main/employee_list.html:2
+msgid "Disabled"
+msgstr "Отключён"
+
+#: main/templates/main/employee_list.html:2
+msgid "Change this staff member’s access?"
+msgstr "Изменить доступ сотрудника?"
+
+#: main/templates/main/employee_list.html:2
+msgid "Disable"
+msgstr "Отключить"
+
+#: main/templates/main/employee_list.html:2
+msgid "Enable"
+msgstr "Включить"
+
+#: main/templates/main/employee_list.html:2
+msgid "No staff yet"
+msgstr "Сотрудников пока нет"
+
+#: main/templates/main/error.html:3
+msgid "Home"
+msgstr "На главную"
+
+#: main/templates/main/form_page.html:7
+msgid "Edit record"
+msgstr "Редактирование записи"
+
+#: main/templates/main/form_page.html:13
+msgid "Balance:"
+msgstr "Остаток:"
+
+#: main/templates/main/form_page.html:13
+msgid "Pay in full"
+msgstr "Оплатить полностью"
+
+#: main/templates/main/form_page.html:16
+msgid "Save"
+msgstr "Сохранить"
+
+#: main/templates/main/form_page.html:18
+msgid "This link is invalid or has already been used. Request a new one."
+msgstr "Ссылка недействительна или уже использована. Запросите новую."
+
+#: main/templates/main/form_page.html:18 main/urls.py:13
+msgid "Reset password"
+msgstr "Восстановить пароль"
+
+#: main/templates/main/home.html:2
+msgid "Debt tracking for businesses"
+msgstr "Учёт долгов для бизнеса"
+
+#: main/templates/main/home.html:7
+msgid "WORKSPACE"
+msgstr "РАБОЧЕЕ ПРОСТРАНСТВО"
+
+#: main/templates/main/home.html:7
+msgid "Shop «"
+msgstr "Магазин «"
+
+#: main/templates/main/home.html:8
+msgid "Add customer"
+msgstr "Добавить клиента"
+
+#: main/templates/main/home.html:11
+msgid "Total shop customers"
+msgstr "Всего клиентов магазина"
+
+#: main/templates/main/home.html:12
+msgid "Total debt amount"
+msgstr "Общая сумма долгов"
+
+#: main/templates/main/home.html:12
+msgid "Active debts:"
+msgstr "Активных долгов:"
+
+#: main/templates/main/home.html:13 main/templates/main/home.html:45
+msgid "Received"
+msgstr "Получено"
+
+#: main/templates/main/home.html:13
+msgid "of the total amount"
+msgstr "от общей суммы"
+
+#: main/templates/main/home.html:14
+msgid "Awaiting payment"
+msgstr "Ожидает оплаты"
+
+#: main/templates/main/home.html:17
+msgid "Recent activity"
+msgstr "Последние операции"
+
+#: main/templates/main/home.html:17
+msgid "Debt and payment activity"
+msgstr "Движение долгов и платежей"
+
+#: main/templates/main/home.html:17
+msgid "All activity →"
+msgstr "Все операции →"
+
+#: main/templates/main/home.html:28
+msgid "New activity will appear here"
+msgstr "Новые действия появятся здесь"
+
+#: main/templates/main/home.html:37
+msgid "QARZ · DEBT TRACKING FOR BUSINESSES"
+msgstr "QARZ · УЧЁТ ДОЛГОВ ДЛЯ БИЗНЕСА"
+
+#: main/templates/main/home.html:38
+msgid "Focus on your customers."
+msgstr "Помните о клиентах."
+
+#: main/templates/main/home.html:38
+msgid "Keep track of debts with Qarz."
+msgstr "Долги считайте в Qarz."
+
+#: main/templates/main/home.html:39
+msgid ""
+"Your shop’s customers, debts and payments in one place. Record sales on "
+"credit, accept partial payments and always know the outstanding balance."
+msgstr ""
+"Клиенты, долги и платежи вашего магазина — в одном месте. Записывайте "
+"продажи в долг, принимайте частичные оплаты и всегда знайте, сколько "
+"осталось вернуть."
+
+#: main/templates/main/home.html:40 main/templates/main/home.html:76
+msgid "Get started"
+msgstr "Начать пользоваться"
+
+#: main/templates/main/home.html:40
+msgid "How it works"
+msgstr "Как это работает"
+
+#: main/templates/main/home.html:41
+msgid ""
+"Explore the features without signing up. Create an account when you’re ready "
+"to manage your shop’s records."
+msgstr ""
+"Познакомьтесь с возможностями без регистрации. Аккаунт понадобится для "
+"работы с данными магазина."
+
+#: main/templates/main/home.html:43
+msgid "Debt tracking example"
+msgstr "Пример учёта долга"
+
+#: main/templates/main/home.html:44
+msgid "EXAMPLE"
+msgstr "ПРИМЕР УЧЁТА"
+
+#: main/templates/main/home.html:44
+msgid "Every payment accounted for"
+msgstr "Каждая оплата на своём месте"
+
+#: main/templates/main/home.html:45
+msgid "Debt amount"
+msgstr "Сумма долга"
+
+#: main/templates/main/home.html:45
+msgid "Outstanding balance"
+msgstr "Осталось вернуть"
+
+#: main/templates/main/home.html:46
+msgid ""
+"Example figures. Your balance is calculated automatically from recorded "
+"payments."
+msgstr ""
+"Демонстрационные данные. Остаток рассчитывается автоматически по вашим "
+"платежам."
+
+#: main/templates/main/home.html:50
+msgid "FOR EVERYDAY WORK"
+msgstr "ДЛЯ ЕЖЕДНЕВНОЙ РАБОТЫ"
+
+#: main/templates/main/home.html:50
+msgid "For businesses that sell on credit"
+msgstr "Для тех, кто продаёт в долг"
+
+#: main/templates/main/home.html:50
+msgid ""
+"For shops and small sales teams that need a clear overview and a reliable "
+"record of customer agreements."
+msgstr ""
+"Магазинам и небольшим торговым командам, которым важно видеть общую картину "
+"и не терять историю договорённостей."
+
+#: main/templates/main/home.html:52
+msgid "For shop owners"
+msgstr "Владельцу магазина"
+
+#: main/templates/main/home.html:52
+msgid "Keep an eye on total debt, incoming payments and cashier activity."
+msgstr ""
+"Контролируйте общую сумму долгов, поступившие платежи и работу кассиров."
+
+#: main/templates/main/home.html:53
+msgid "For cashiers"
+msgstr "Кассиру"
+
+#: main/templates/main/home.html:53
+msgid "Find customers quickly, record debts and log every payment."
+msgstr "Быстро находите клиента, оформляйте долг и отмечайте каждую оплату."
+
+#: main/templates/main/home.html:54
+msgid "For customers"
+msgstr "Клиенту"
+
+#: main/templates/main/home.html:54
+msgid ""
+"View your debts, due dates and payment history in your account. Your shop "
+"provides access."
+msgstr ""
+"Смотрите свои долги, сроки и историю платежей в личном кабинете. Доступ "
+"выдаёт магазин."
+
+#: main/templates/main/home.html:58
+msgid "FEATURES"
+msgstr "ВОЗМОЖНОСТИ"
+
+#: main/templates/main/home.html:58
+msgid "Organized records. Clear balances."
+msgstr "Порядок в записях. Ясность в расчётах."
+
+#: main/templates/main/home.html:60
+msgid "Customers and contacts"
+msgstr "Клиенты и контакты"
+
+#: main/templates/main/home.html:60
+msgid ""
+"Names, phone numbers, addresses and notes alongside each customer’s debt "
+"history."
+msgstr "Имена, телефоны, адреса и заметки рядом с историей долгов."
+
+#: main/templates/main/home.html:61
+msgid "Due dates and overdue debts"
+msgstr "Сроки и просрочка"
+
+#: main/templates/main/home.html:61
+msgid "Set due dates and use filters to find overdue debts."
+msgstr ""
+"Указывайте дату оплаты и находите просроченные долги с помощью фильтров."
+
+#: main/templates/main/home.html:62
+msgid "Partial payments"
+msgstr "Частичные платежи"
+
+#: main/templates/main/home.html:62
+msgid ""
+"Accept partial or full payments. The outstanding balance updates "
+"automatically."
+msgstr ""
+"Принимайте оплату частями или целиком. Сумма остатка обновляется "
+"автоматически."
+
+#: main/templates/main/home.html:63
+msgid "Role-based access"
+msgstr "Раздельный доступ"
+
+#: main/templates/main/home.html:63
+msgid ""
+"Owners manage the shop, cashiers record transactions and customers see only "
+"their own debts."
+msgstr ""
+"Владелец управляет магазином, кассир ведёт операции, клиент видит только "
+"свои долги."
+
+#: main/templates/main/home.html:64
+msgid "History and archive"
+msgstr "История и архив"
+
+#: main/templates/main/home.html:64
+msgid ""
+"Review staff activity and archive customers while keeping their records."
+msgstr ""
+"Просматривайте действия сотрудников и архивируйте клиентов с сохранением "
+"записей."
+
+#: main/templates/main/home.html:69
+msgid "HOW IT WORKS"
+msgstr "КАК ЭТО РАБОТАЕТ"
+
+#: main/templates/main/home.html:69
+msgid "Three steps to clear records"
+msgstr "Три шага к понятному учёту"
+
+#: main/templates/main/home.html:71
+msgid "Set up your shop"
+msgstr "Создайте магазин"
+
+#: main/templates/main/home.html:71
+msgid "Sign up, enter your shop’s name and add cashiers if needed."
+msgstr ""
+"Зарегистрируйтесь, укажите название магазина и при необходимости добавьте "
+"кассиров."
+
+#: main/templates/main/home.html:72
+msgid "Add a customer and a debt"
+msgstr "Добавьте клиента и долг"
+
+#: main/templates/main/home.html:72
+msgid "Enter contact details, the amount, a description and the due date."
+msgstr "Запишите контакты, сумму, описание и срок оплаты."
+
+#: main/templates/main/home.html:73
+msgid "Record payments"
+msgstr "Отмечайте платежи"
+
+#: main/templates/main/home.html:73
+msgid ""
+"Accept payments and track balances in the overview and customer details."
+msgstr ""
+"Принимайте оплаты и следите за остатком в общем обзоре и карточке клиента."
+
+#: main/templates/main/home.html:76
+msgid "Keep your records close at hand"
+msgstr "Пусть все записи будут под рукой"
+
+#: main/templates/main/home.html:76
+msgid "Create an account and start managing your shop’s records."
+msgstr "Создайте аккаунт и начните вести учёт своего магазина."
+
+#: main/templates/main/home.html:76
+msgid "Already have an account? Log in"
+msgstr "Уже есть аккаунт? Войти"
+
+#: main/templates/main/home.html:77
+msgid "Debt tracking everyone can understand."
+msgstr "Учёт долгов, понятный каждому."
+
+#: main/templates/main/login.html:5
+msgid "WELCOME BACK"
+msgstr "ДОБРО ПОЖАЛОВАТЬ"
+
+#: main/templates/main/login.html:5
+msgid "Get back to business"
+msgstr "Продолжайте вести дела"
+
+#: main/templates/main/login.html:5
+msgid "without the hassle."
+msgstr "без лишней сложности."
+
+#: main/templates/main/login.html:5
+msgid "Log in to see your business’s debts, payments and customers."
+msgstr "Войдите, чтобы увидеть долги, платежи и клиентов вашего бизнеса."
+
+#: main/templates/main/login.html:6
+msgid "Log in to Qarz"
+msgstr "Вход в Qarz"
+
+#: main/templates/main/login.html:6
+msgid "Enter your account details"
+msgstr "Введите данные вашего аккаунта"
+
+#: main/templates/main/login.html:12
+msgid "Forgot your password?"
+msgstr "Забыли пароль?"
+
+#: main/templates/main/login.html:12
+msgid "Don’t have an account?"
+msgstr "Нет аккаунта?"
+
+#: main/templates/main/password_reset_email.txt:1
+msgid "Qarz password reset."
+msgstr "Восстановление пароля Qarz."
+
+#: main/templates/main/password_reset_email.txt:2
+msgid "Open this link:"
+msgstr "Откройте ссылку:"
+
+#: main/templates/main/password_reset_email.txt:3
+msgid "If you did not request a password reset, ignore this email."
+msgstr "Если вы не запрашивали восстановление, проигнорируйте письмо."
+
+#: main/templates/main/password_reset_subject.txt:1
+msgid "Qarz password reset"
+msgstr "Восстановление пароля Qarz"
+
+#: main/templates/main/payment_list.html:2
+msgid "FINANCES"
+msgstr "ФИНАНСЫ"
+
+#: main/templates/main/payment_list.html:2
+msgid "History of all received payments"
+msgstr "История всех принятых оплат"
+
+#: main/templates/main/payment_list.html:2
+msgid "＋ Accept payment"
+msgstr "＋ Принять платёж"
+
+#: main/templates/main/payment_list.html:2
+msgid "Search payments by customer"
+msgstr "Поиск платежа по клиенту"
+
+#: main/templates/main/payment_list.html:2
+msgid "Customer name"
+msgstr "Имя клиента"
+
+#: main/urls.py:14
+msgid "Check your email"
+msgstr "Проверьте почту"
+
+#: main/urls.py:14
+msgid ""
+"If an account with this email exists, you’ll receive a password reset link."
+msgstr ""
+"Если аккаунт с такой почтой существует, вы получите ссылку для "
+"восстановления пароля."
+
+#: main/urls.py:16
+msgid "Password changed"
+msgstr "Пароль изменён"
+
+#: main/urls.py:16
+msgid "You can now log in with your new password."
+msgstr "Теперь можно войти с новым паролем."
+
+#: main/views.py:136
+msgid "Register your shop"
+msgstr "Регистрация магазина"
+
+#: main/views.py:313
+msgid "This debt cannot be cancelled."
+msgstr "Этот долг нельзя отменить."
+
+#: main/views.py:364
+msgid ""
+"The payment was not saved because the database is busy. Refresh the balance "
+"and try again."
+msgstr "Платёж не сохранён: база занята. Обновите остаток и повторите попытку."
+
+#: main/views.py:391
+msgid "New staff member"
+msgstr "Новый сотрудник"
+
+#: main/views.py:456
+msgid "Customer access"
+msgstr "Доступ клиента"
+
+#: main/views.py:470
+msgid "Customer account created."
+msgstr "Аккаунт клиента создан."

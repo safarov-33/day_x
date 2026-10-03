@@ -1,0 +1,55 @@
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Staff" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "TEAM" %}</p>
+                <h1>{% translate "Staff" %}</h1>
+                <p>{% translate "Manage cashier access" %}</p>
+            </div>
+            <a class="button" href="{% url 'employee_create' %}">{% translate "＋ Add cashier" %}</a>
+        </div>
+        <form class="search-form">
+            <input name="q" aria-label="{% translate 'Search staff' %}" placeholder="{% translate 'Username' %}" value="{{ request.GET.q }}">
+            <button class="button secondary">{% translate "Search" %}</button>
+        </form>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% translate "Staff member" %}</th>
+                        <th>{% translate "Role" %}</th>
+                        <th>{% translate "Status" %}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                        <tr>
+                            <td>
+                                <div class="person-cell">
+                                    <span class="avatar">{{ employee.user.username|first|upper }}</span>
+                                    <strong>{{ employee.user.username }}</strong>
+                                </div>
+                            </td>
+                            <td>{% translate "Cashier" %}</td>
+                            <td><span class="status {% if employee.is_active %}status-paid{% else %}status-cancelled{% endif %}">{% if employee.is_active %}{% translate "Active" %}{% else %}{% translate "Disabled" %}{% endif %}</span></td>
+                            <td class="row-action">
+                                <form action="{% url 'employee_delete' employee.pk %}" method="post" data-confirm="{% translate 'Change this staff member’s access?' %}">
+                                    {% csrf_token %}
+                                    <button class="text-danger" type="submit">{% if employee.is_active %}{% translate "Disable" %}{% else %}{% translate "Enable" %}{% endif %}</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td class="empty-row" colspan="4">{% translate "No staff yet" %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

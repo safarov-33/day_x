@@ -1,0 +1,52 @@
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Customers" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "SHOP" %}</p>
+                <h1>{% translate "Customers" %}</h1>
+            </div>
+            <a class="button" href="{% url 'customer_create' %}">{% translate "＋ Add customer" %}</a>
+        </div>
+        <form class="filter-bar">
+            <label>
+                {% translate "Archive" %}
+                <select name="archived">
+                    <option value="">{% translate "Current customers" %}</option>
+                    <option value="1"{% if request.GET.archived == '1' %} selected{% endif %}>{% translate "Archive" %}</option>
+                </select>
+            </label>
+            <input name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Name or phone number' %}">
+            <button class="button" type="submit">{% translate "Search" %}</button>
+        </form>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% translate "Name" %}</th>
+                        <th>{% translate "Phone" %}</th>
+                        <th>{% translate "Total debt" %}</th>
+                        <th>{% translate "Balance" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                        <tr>
+                            <td><a href="{% url 'customer_detail' customer.pk %}">{{ customer.name }}</a></td>
+                            <td>{{ customer.phone }}</td>
+                            <td>{{ customer.total_debt|floatformat:2 }} TJS</td>
+                            <td>{{ customer.remaining_debt|floatformat:2 }} TJS</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">{% translate "No customers yet" %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'main/_pagination.html' %}
+    </section>
+{% endblock %}

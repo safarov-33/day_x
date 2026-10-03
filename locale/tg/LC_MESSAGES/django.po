@@ -1,0 +1,1240 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Qarz\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 10:14+0500\n"
+"Language: tg\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: main/activity.py:5 main/tests.py:262
+#, python-format
+msgid "Customer created: %(name)s"
+msgstr "Муштарӣ илова шуд: %(name)s"
+
+#: main/activity.py:6
+#, python-format
+msgid "Customer updated: %(name)s"
+msgstr "Муштарӣ таҳрир шуд: %(name)s"
+
+#: main/activity.py:7
+#, python-format
+msgid "Customer archive status changed: %(name)s"
+msgstr "Ҳолати бойгонии муштарӣ тағйир ёфт: %(name)s"
+
+#: main/activity.py:8
+#, python-format
+msgid "Debt created: %(amount)s TJS, customer: %(name)s"
+msgstr "Қарз сабт шуд: %(amount)s TJS, муштарӣ: %(name)s"
+
+#: main/activity.py:9
+#, python-format
+msgid "Debt updated: %(id)s"
+msgstr "Қарз таҳрир шуд: %(id)s"
+
+#: main/activity.py:10
+#, python-format
+msgid "Debt cancelled: %(id)s"
+msgstr "Қарз бекор шуд: %(id)s"
+
+#: main/activity.py:11
+#, python-format
+msgid "Payment received: %(amount)s TJS, customer: %(name)s"
+msgstr "Пардохт қабул шуд: %(amount)s TJS, муштарӣ: %(name)s"
+
+#: main/activity.py:12
+#, python-format
+msgid "Cashier created: %(name)s"
+msgstr "Хазинадор илова шуд: %(name)s"
+
+#: main/activity.py:13
+#, python-format
+msgid "Cashier access changed: %(name)s"
+msgstr "Дастрасии хазинадор тағйир ёфт: %(name)s"
+
+#: main/error_views.py:6
+msgid "Access denied"
+msgstr "Дастрасӣ манъ аст"
+
+#: main/error_views.py:7
+msgid "Your account does not have access to this page."
+msgstr "Ҳисоби шумо ба ин саҳифа дастрасӣ надорад."
+
+#: main/error_views.py:11
+msgid "Page not found"
+msgstr "Саҳифа ёфт нашуд"
+
+#: main/error_views.py:12
+msgid "Check the address or return to the home page."
+msgstr "Суроғаро санҷед ё ба саҳифаи асосӣ баргардед."
+
+#: main/error_views.py:16
+msgid "Unable to open this page"
+msgstr "Саҳифаро кушодан нашуд"
+
+#: main/error_views.py:17
+msgid "Please try again later."
+msgstr "Лутфан, каме дертар боз кӯшиш кунед."
+
+#: main/error_views.py:21
+msgid "Refresh the page"
+msgstr "Саҳифаро нав кунед"
+
+#: main/error_views.py:22
+msgid "This form session has expired. Refresh the page and submit it again."
+msgstr "Муҳлати ҷаласаи шакл гузаштааст. Саҳифаро нав кунед ва боз фиристед."
+
+#: main/forms.py:13 main/templates/main/customer_list.html:4
+msgid "Name"
+msgstr "Ном"
+
+#: main/forms.py:13 main/forms.py:29 main/forms.py:81
+#: main/templates/main/customer_list.html:4 main/views.py:480
+msgid "Phone"
+msgstr "Телефон"
+
+#: main/forms.py:13 main/forms.py:29 main/forms.py:82
+msgid "Address"
+msgstr "Суроға"
+
+#: main/forms.py:13
+msgid "Note"
+msgstr "Қайд"
+
+#: main/forms.py:21 main/templates/main/debt_detail.html:1 main/views.py:255
+#: main/views.py:294
+msgid "Debt"
+msgstr "Қарз"
+
+#: main/forms.py:21
+msgid "Payment amount"
+msgstr "Маблағи пардохт"
+
+#: main/forms.py:29 main/forms.py:79 main/tests.py:261
+msgid "Shop name"
+msgstr "Номи мағоза"
+
+#: main/forms.py:33 main/forms.py:80 main/forms.py:101
+msgid "Email address"
+msgstr "Почтаи электронӣ"
+
+#: main/forms.py:47
+msgid "This customer already has an account."
+msgstr "Ба ин муштарӣ аллакай дастрасӣ дода шудааст."
+
+#: main/forms.py:61 main/models.py:19 main/templates/main/debt_list.html:8
+#: main/templates/main/debt_list.html:17
+#: main/templates/main/payment_list.html:2 main/views.py:170 main/views.py:193
+#: main/views.py:480
+msgid "Customer"
+msgstr "Муштарӣ"
+
+#: main/forms.py:62 main/templates/main/customer_detail.html:4
+#: main/templates/main/debt_detail.html:3
+#: main/templates/main/debt_detail.html:4 main/templates/main/debt_list.html:17
+#: main/templates/main/payment_list.html:2 main/views.py:480
+msgid "Amount"
+msgstr "Маблағ"
+
+#: main/forms.py:63
+msgid "Description"
+msgstr "Тавсиф"
+
+#: main/forms.py:64 main/templates/main/customer_detail.html:4
+#: main/templates/main/debt_list.html:17 main/views.py:480
+msgid "Due date"
+msgstr "Муҳлати пардохт"
+
+#: main/forms.py:68
+msgid "What is this debt for?"
+msgstr "Қарз барои чӣ сабт шудааст?"
+
+#: main/i18n_messages.py:5 main/templates/main/employee_list.html:2
+#: main/templates/main/login.html:9
+msgid "Username"
+msgstr "Номи корбар"
+
+#: main/i18n_messages.py:6
+msgid "username"
+msgstr "номи корбар"
+
+#: main/i18n_messages.py:7 main/templates/main/login.html:10
+msgid "Password"
+msgstr "Рамз"
+
+#: main/i18n_messages.py:8
+msgid "Password confirmation"
+msgstr "Тасдиқи рамз"
+
+#: main/i18n_messages.py:9 main/urls.py:15
+msgid "New password"
+msgstr "Рамзи нав"
+
+#: main/i18n_messages.py:10
+msgid "New password confirmation"
+msgstr "Тасдиқи рамзи нав"
+
+#: main/i18n_messages.py:11
+msgid "Email"
+msgstr "Почтаи электронӣ"
+
+#: main/i18n_messages.py:12
+msgid "email address"
+msgstr "почтаи электронӣ"
+
+#: main/i18n_messages.py:13
+msgid "first name"
+msgstr "ном"
+
+#: main/i18n_messages.py:14
+msgid "last name"
+msgstr "насаб"
+
+#: main/i18n_messages.py:15
+msgid "Enter the same password as before, for verification."
+msgstr "Барои тасдиқ ҳамон рамзро бори дигар ворид кунед."
+
+#: main/i18n_messages.py:16
+msgid "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+msgstr "Ҳатмӣ. То 150 аломат. Танҳо ҳарфҳо, рақамҳо ва аломатҳои @/./+/-/_."
+
+#: main/i18n_messages.py:17
+msgid "Your password can’t be too similar to your other personal information."
+msgstr "Рамзи шумо набояд ба маълумоти шахсии шумо хеле монанд бошад."
+
+#: main/i18n_messages.py:18
+msgid "Your password can’t be a commonly used password."
+msgstr "Рамзи шумо набояд аз рамзҳои маъмул бошад."
+
+#: main/i18n_messages.py:19
+msgid "Your password can’t be entirely numeric."
+msgstr "Рамзи шумо набояд танҳо аз рақамҳо иборат бошад."
+
+#: main/i18n_messages.py:20
+#, python-format
+msgid "The password is too similar to the %(verbose_name)s."
+msgstr "Рамз ба маълумоти «%(verbose_name)s» хеле монанд аст."
+
+#: main/i18n_messages.py:21
+msgid "This password is too common."
+msgstr "Ин рамз хеле маъмул аст."
+
+#: main/i18n_messages.py:22
+msgid "This password is entirely numeric."
+msgstr "Ин рамз танҳо аз рақамҳо иборат аст."
+
+#: main/i18n_messages.py:23
+msgid "The two password fields didn’t match."
+msgstr "Рамзҳои воридшуда якхела нестанд."
+
+#: main/i18n_messages.py:24
+msgid "This account is inactive."
+msgstr "Ин ҳисоб ғайрифаъол аст."
+
+#: main/i18n_messages.py:25
+#, python-format
+msgid ""
+"Please enter a correct %(username)s and password. Note that both fields may "
+"be case-sensitive."
+msgstr ""
+"Лутфан, %(username)s ва рамзро дуруст ворид кунед. Ҳарфҳои калону хурд "
+"метавонанд фарқ дошта бошанд."
+
+#: main/i18n_messages.py:26
+msgid "A user with that username already exists."
+msgstr "Корбаре бо ин ном аллакай вуҷуд дорад."
+
+#: main/i18n_messages.py:27
+msgid ""
+"Enter a valid username. This value may contain only letters, numbers, and "
+"@/./+/-/_ characters."
+msgstr ""
+"Номи корбарро дуруст ворид кунед. Танҳо ҳарфҳо, рақамҳо ва аломатҳои @/./+/-/"
+"_ иҷозат дода мешаванд."
+
+#: main/i18n_messages.py:28
+msgid "This field is required."
+msgstr "Пур кардани ин майдон ҳатмист."
+
+#: main/i18n_messages.py:29
+msgid "This field cannot be blank."
+msgstr "Ин майдон холӣ буда наметавонад."
+
+#: main/i18n_messages.py:30
+msgid "Enter a valid value."
+msgstr "Қимати дуруст ворид кунед."
+
+#: main/i18n_messages.py:31
+msgid "Enter a valid email address."
+msgstr "Суроғаи дурусти почтаи электрониро ворид кунед."
+
+#: main/i18n_messages.py:32
+msgid "Enter a valid date."
+msgstr "Санаи дуруст ворид кунед."
+
+#: main/i18n_messages.py:33
+msgid "Enter a number."
+msgstr "Рақам ворид кунед."
+
+#: main/i18n_messages.py:34
+msgid "Enter a whole number."
+msgstr "Адади бутун ворид кунед."
+
+#: main/i18n_messages.py:35
+msgid "Enter a valid integer."
+msgstr "Адади бутуни дуруст ворид кунед."
+
+#: main/i18n_messages.py:36
+msgid "Select a valid choice. That choice is not one of the available choices."
+msgstr "Яке аз вариантҳои дастрасро интихоб кунед."
+
+#: main/i18n_messages.py:37
+#, python-format
+msgid "Select a valid choice. %(value)s is not one of the available choices."
+msgstr ""
+"Варианти дурустро интихоб кунед. %(value)s дар байни вариантҳои дастрас нест."
+
+#: main/i18n_messages.py:38
+#, python-format
+msgid "Ensure this value is greater than or equal to %(limit_value)s."
+msgstr "Ин қимат бояд аз %(limit_value)s кам набошад."
+
+#: main/i18n_messages.py:39
+#, python-format
+msgid "Ensure this value is less than or equal to %(limit_value)s."
+msgstr "Ин қимат бояд аз %(limit_value)s зиёд набошад."
+
+#: main/i18n_messages.py:45
+#, python-format
+msgid "Your password must contain at least %(min_length)d character."
+msgid_plural "Your password must contain at least %(min_length)d characters."
+msgstr[0] "Рамзи шумо бояд на кам аз %(min_length)d аломат дошта бошад."
+msgstr[1] "Рамзи шумо бояд на кам аз %(min_length)d аломат дошта бошад."
+
+#: main/i18n_messages.py:46
+#, python-format
+msgid "This password is too short. It must contain at least %d character."
+msgid_plural ""
+"This password is too short. It must contain at least %d characters."
+msgstr[0] "Ин рамз хеле кӯтоҳ аст. Он бояд на кам аз %d аломат дошта бошад."
+msgstr[1] "Ин рамз хеле кӯтоҳ аст. Он бояд на кам аз %d аломат дошта бошад."
+
+#: main/i18n_messages.py:47
+#, python-format
+msgid ""
+"Ensure this value has at most %(limit_value)d character (it has "
+"%(show_value)d)."
+msgid_plural ""
+"Ensure this value has at most %(limit_value)d characters (it has "
+"%(show_value)d)."
+msgstr[0] ""
+"Ин қимат бояд на бештар аз %(limit_value)d аломат дошта бошад (ҳоло "
+"%(show_value)d аломат дорад)."
+msgstr[1] ""
+"Ин қимат бояд на бештар аз %(limit_value)d аломат дошта бошад (ҳоло "
+"%(show_value)d аломат дорад)."
+
+#: main/i18n_messages.py:48
+#, python-format
+msgid ""
+"Ensure this value has at least %(limit_value)d character (it has "
+"%(show_value)d)."
+msgid_plural ""
+"Ensure this value has at least %(limit_value)d characters (it has "
+"%(show_value)d)."
+msgstr[0] ""
+"Ин қимат бояд на кам аз %(limit_value)d аломат дошта бошад (ҳоло "
+"%(show_value)d аломат дорад)."
+msgstr[1] ""
+"Ин қимат бояд на кам аз %(limit_value)d аломат дошта бошад (ҳоло "
+"%(show_value)d аломат дорад)."
+
+#: main/i18n_messages.py:49
+#, python-format
+msgid "Ensure that there are no more than %(max)s digit in total."
+msgid_plural "Ensure that there are no more than %(max)s digits in total."
+msgstr[0] "Шумораи умумии рақамҳо набояд аз %(max)s зиёд бошад."
+msgstr[1] "Шумораи умумии рақамҳо набояд аз %(max)s зиёд бошад."
+
+#: main/i18n_messages.py:50
+#, python-format
+msgid "Ensure that there are no more than %(max)s decimal place."
+msgid_plural "Ensure that there are no more than %(max)s decimal places."
+msgstr[0] "Шумораи рақамҳо пас аз вергул набояд аз %(max)s зиёд бошад."
+msgstr[1] "Шумораи рақамҳо пас аз вергул набояд аз %(max)s зиёд бошад."
+
+#: main/i18n_messages.py:51
+#, python-format
+msgid ""
+"Ensure that there are no more than %(max)s digit before the decimal point."
+msgid_plural ""
+"Ensure that there are no more than %(max)s digits before the decimal point."
+msgstr[0] "Шумораи рақамҳо пеш аз вергул набояд аз %(max)s зиёд бошад."
+msgstr[1] "Шумораи рақамҳо пеш аз вергул набояд аз %(max)s зиёд бошад."
+
+#: main/models.py:17
+msgid "Owner"
+msgstr "Соҳиб"
+
+#: main/models.py:18 main/templates/main/employee_list.html:2
+msgid "Cashier"
+msgstr "Хазинадор"
+
+#: main/models.py:75
+msgid "Unpaid"
+msgstr "Пардохт нашудааст"
+
+#: main/models.py:76
+msgid "Partially paid"
+msgstr "Қисман пардохт шудааст"
+
+#: main/models.py:77 main/templates/main/customer_detail.html:3
+#: main/templates/main/debt_detail.html:3 main/templates/main/debt_list.html:10
+#: main/views.py:480
+msgid "Paid"
+msgstr "Пардохтшуда"
+
+#: main/models.py:78 main/templates/main/debt_list.html:10
+msgid "Cancelled"
+msgstr "Бекоршуда"
+
+#: main/models.py:106
+msgid "The debt amount cannot be less than the payments already received."
+msgstr "Маблағи қарз аз пардохтҳои гирифташуда кам буда наметавонад."
+
+#: main/models.py:110
+msgid "A debt with payments cannot be cancelled."
+msgstr "Қарзе, ки аз рӯйи он пардохт шудааст, бекор карда намешавад."
+
+#: main/models.py:152
+msgid "Payments cannot be accepted for a cancelled debt."
+msgstr "Барои қарзи бекоршуда пардохт қабул карда намешавад."
+
+#: main/models.py:164 main/tests.py:272
+msgid "The payment cannot exceed the outstanding balance."
+msgstr "Пардохт аз бақияи қарз зиёд буда наметавонад."
+
+#: main/templates/main/_pagination.html:3
+msgid "Pages"
+msgstr "Саҳифаҳо"
+
+#: main/templates/main/_pagination.html:4
+#: main/templates/main/confirm_delete.html:2
+#: main/templates/main/form_page.html:5
+msgid "← Back"
+msgstr "← Бозгашт"
+
+#: main/templates/main/_pagination.html:6
+msgid "Next →"
+msgstr "Баъдӣ →"
+
+#: main/templates/main/action_log_list.html:1
+#: main/templates/main/action_log_list.html:2
+msgid "Activity log"
+msgstr "Таърихи амалҳо"
+
+#: main/templates/main/action_log_list.html:2
+msgid "HISTORY"
+msgstr "ТАЪРИХ"
+
+#: main/templates/main/action_log_list.html:2
+msgid "Action"
+msgstr "Амал"
+
+#: main/templates/main/action_log_list.html:2
+msgid "User"
+msgstr "Корбар"
+
+#: main/templates/main/action_log_list.html:2
+#: main/templates/main/debt_detail.html:4
+#: main/templates/main/payment_list.html:2
+msgid "Date"
+msgstr "Сана"
+
+#: main/templates/main/action_log_list.html:2 main/templates/main/home.html:22
+msgid "System"
+msgstr "Низом"
+
+#: main/templates/main/action_log_list.html:2 main/templates/main/home.html:28
+msgid "No activity yet"
+msgstr "Ҳоло амале нест"
+
+#: main/templates/main/base.html:8
+msgid "Qarz — simple debt tracking for small businesses."
+msgstr "Qarz — баҳисобгирии осони қарзҳо барои тиҷорати хурд."
+
+#: main/templates/main/base.html:21
+msgid "Qarz — home"
+msgstr "Qarz — саҳифаи асосӣ"
+
+#: main/templates/main/base.html:25
+msgid "Main navigation"
+msgstr "Роҳнамои асосӣ"
+
+#: main/templates/main/base.html:27 main/templates/main/base.html:65
+#: main/templates/main/debt_list.html:5
+msgid "My debts"
+msgstr "Қарзҳои ман"
+
+#: main/templates/main/base.html:29 main/templates/main/base.html:67
+#: main/templates/main/home.html:2 main/templates/main/home.html:7
+msgid "Overview"
+msgstr "Шарҳи умумӣ"
+
+#: main/templates/main/base.html:30 main/templates/main/base.html:68
+#: main/templates/main/customer_list.html:1
+#: main/templates/main/customer_list.html:2 main/templates/main/home.html:11
+msgid "Customers"
+msgstr "Муштариён"
+
+#: main/templates/main/base.html:31 main/templates/main/base.html:69
+#: main/templates/main/debt_list.html:2 main/templates/main/debt_list.html:5
+msgid "Debts"
+msgstr "Қарзҳо"
+
+#: main/templates/main/base.html:32 main/templates/main/base.html:70
+#: main/templates/main/payment_list.html:1
+#: main/templates/main/payment_list.html:2
+msgid "Payments"
+msgstr "Пардохтҳо"
+
+#: main/templates/main/base.html:33 main/templates/main/base.html:57
+#: main/templates/main/employee_list.html:1
+#: main/templates/main/employee_list.html:2
+msgid "Staff"
+msgstr "Кормандон"
+
+#: main/templates/main/base.html:38
+msgid "Interface language"
+msgstr "Забони сомона"
+
+#: main/templates/main/base.html:40
+msgid "Русский"
+msgstr "Русский"
+
+#: main/templates/main/base.html:42
+msgid "Тоҷикӣ"
+msgstr "Тоҷикӣ"
+
+#: main/templates/main/base.html:44
+msgid "Switch theme"
+msgstr "Иваз кардани намуди зоҳирӣ"
+
+#: main/templates/main/base.html:50
+msgid "Log out"
+msgstr "Баромадан"
+
+#: main/templates/main/base.html:52 main/templates/main/login.html:2
+#: main/templates/main/login.html:11
+msgid "Log in"
+msgstr "Воридшавӣ"
+
+#: main/templates/main/base.html:52 main/templates/main/login.html:12
+#: main/views.py:136
+msgid "Sign up"
+msgstr "Сабти ном"
+
+#: main/templates/main/base.html:57
+msgid "History"
+msgstr "Таърих"
+
+#: main/templates/main/base.html:63
+msgid "Mobile navigation"
+msgstr "Роҳнамои мобилӣ"
+
+#: main/templates/main/confirm_delete.html:1
+msgid "Customer archive"
+msgstr "Бойгонии муштарӣ"
+
+#: main/templates/main/confirm_delete.html:2
+msgid "Restore this customer?"
+msgstr "Муштариро барқарор мекунед?"
+
+#: main/templates/main/confirm_delete.html:2
+msgid "Archive this customer?"
+msgstr "Муштариро ба бойгонӣ мегузаронед?"
+
+#: main/templates/main/confirm_delete.html:2
+msgid ""
+"». All debts and payments will be kept. You can restore this customer later."
+msgstr ""
+"». Ҳамаи қарзҳо ва пардохтҳо нигоҳ дошта мешаванд. Муштариро баъдтар "
+"барқарор кардан мумкин аст."
+
+#: main/templates/main/confirm_delete.html:2
+msgid "Back"
+msgstr "Бозгашт"
+
+#: main/templates/main/confirm_delete.html:2
+msgid "Confirm"
+msgstr "Тасдиқ кардан"
+
+#: main/templates/main/customer_detail.html:2
+msgid "← Customers"
+msgstr "← Муштариён"
+
+#: main/templates/main/customer_detail.html:2
+msgid "No address provided"
+msgstr "Суроға нишон дода нашудааст"
+
+#: main/templates/main/customer_detail.html:2
+#: main/templates/main/debt_detail.html:2
+msgid "Edit"
+msgstr "Таҳрир кардан"
+
+#: main/templates/main/customer_detail.html:2 main/templates/main/home.html:8
+msgid "Add debt"
+msgstr "Илова кардани қарз"
+
+#: main/templates/main/customer_detail.html:3
+#: main/templates/main/customer_list.html:4
+msgid "Total debt"
+msgstr "Қарзи умумӣ"
+
+#: main/templates/main/customer_detail.html:3
+#: main/templates/main/customer_detail.html:4
+#: main/templates/main/customer_list.html:4
+#: main/templates/main/debt_detail.html:3 main/templates/main/debt_list.html:17
+#: main/templates/main/home.html:14 main/views.py:480
+msgid "Balance"
+msgstr "Бақия"
+
+#: main/templates/main/customer_detail.html:4
+msgid "Customer debts"
+msgstr "Қарзҳои муштарӣ"
+
+#: main/templates/main/customer_detail.html:4
+msgid "Debt and payment history"
+msgstr "Таърихи қарзҳо ва пардохтҳо"
+
+#: main/templates/main/customer_detail.html:4
+#: main/templates/main/debt_list.html:9 main/templates/main/debt_list.html:17
+#: main/templates/main/employee_list.html:2 main/views.py:480
+msgid "Status"
+msgstr "Ҳолат"
+
+#: main/templates/main/customer_detail.html:4
+#: main/templates/main/debt_list.html:19 main/templates/main/home.html:7
+msgid "Not set"
+msgstr "Нишон дода нашудааст"
+
+#: main/templates/main/customer_detail.html:4
+msgid "This customer has no debts yet"
+msgstr "Ин муштарӣ ҳоло қарз надорад"
+
+#: main/templates/main/customer_detail.html:7
+msgid "Create customer access"
+msgstr "Додани дастрасӣ ба муштарӣ"
+
+#: main/templates/main/customer_detail.html:7
+msgid "Account:"
+msgstr "Ҳисоб:"
+
+#: main/templates/main/customer_detail.html:8
+msgid "Restore from archive"
+msgstr "Барқарор кардан аз бойгонӣ"
+
+#: main/templates/main/customer_detail.html:8
+#: main/templates/main/customer_list.html:3
+msgid "Archive"
+msgstr "Бойгонӣ"
+
+#: main/templates/main/customer_list.html:2
+msgid "SHOP"
+msgstr "МАҒОЗА"
+
+#: main/templates/main/customer_list.html:2
+msgid "＋ Add customer"
+msgstr "＋ Илова кардани муштарӣ"
+
+#: main/templates/main/customer_list.html:3
+msgid "Current customers"
+msgstr "Муштариёни ҷорӣ"
+
+#: main/templates/main/customer_list.html:3
+msgid "Name or phone number"
+msgstr "Ном ё рақами телефон"
+
+#: main/templates/main/customer_list.html:3
+#: main/templates/main/debt_list.html:14
+#: main/templates/main/employee_list.html:2
+#: main/templates/main/payment_list.html:2
+msgid "Search"
+msgstr "Ҷустуҷӯ"
+
+#: main/templates/main/customer_list.html:5
+msgid "No customers yet"
+msgstr "Ҳоло муштарӣ нест"
+
+#: main/templates/main/debt_detail.html:2
+msgid "← Debts"
+msgstr "← Қарзҳо"
+
+#: main/templates/main/debt_detail.html:2
+msgid "DEBT #"
+msgstr "ҚАРЗ №"
+
+#: main/templates/main/debt_detail.html:2
+msgid "No description"
+msgstr "Бе тавсиф"
+
+#: main/templates/main/debt_detail.html:2
+msgid "Created"
+msgstr "Сабт шудааст"
+
+#: main/templates/main/debt_detail.html:2
+msgid "Due:"
+msgstr "Муҳлат:"
+
+#: main/templates/main/debt_detail.html:2
+msgid "not set"
+msgstr "нишон дода нашудааст"
+
+#: main/templates/main/debt_detail.html:2 main/views.py:338
+msgid "Accept payment"
+msgstr "Қабули пардохт"
+
+#: main/templates/main/debt_detail.html:3
+msgid "This debt is overdue"
+msgstr "Муҳлати пардохт гузаштааст"
+
+#: main/templates/main/debt_detail.html:4
+msgid "Payment history"
+msgstr "Таърихи пардохтҳо"
+
+#: main/templates/main/debt_detail.html:4
+#: main/templates/main/payment_list.html:2
+msgid "Accepted by"
+msgstr "Қабулкунанда"
+
+#: main/templates/main/debt_detail.html:4
+#: main/templates/main/payment_list.html:3
+msgid "No payments yet"
+msgstr "Ҳоло пардохте нест"
+
+#: main/templates/main/debt_detail.html:5
+msgid "Cancel debt"
+msgstr "Бекор кардани қарз"
+
+#: main/templates/main/debt_list.html:5
+msgid "RECORDS"
+msgstr "БАҲИСОБГИРӢ"
+
+#: main/templates/main/debt_list.html:5
+msgid "Amounts, due dates and payment history"
+msgstr "Маблағҳо, муҳлатҳо ва таърихи пардохт"
+
+#: main/templates/main/debt_list.html:5
+msgid "＋ Add debt"
+msgstr "＋ Илова кардани қарз"
+
+#: main/templates/main/debt_list.html:8
+msgid "Search by name"
+msgstr "Ҷустуҷӯ аз рӯйи ном"
+
+#: main/templates/main/debt_list.html:10
+msgid "All"
+msgstr "Ҳама"
+
+#: main/templates/main/debt_list.html:10
+#: main/templates/main/employee_list.html:2
+msgid "Active"
+msgstr "Фаъол"
+
+#: main/templates/main/debt_list.html:10 main/templates/main/debt_list.html:19
+msgid "Overdue"
+msgstr "Муҳлат гузаштааст"
+
+#: main/templates/main/debt_list.html:12
+msgid "Due from"
+msgstr "Муҳлат аз"
+
+#: main/templates/main/debt_list.html:13
+msgid "Due until"
+msgstr "Муҳлат то"
+
+#: main/templates/main/debt_list.html:14
+msgid "Reset"
+msgstr "Тоза кардан"
+
+#: main/templates/main/debt_list.html:19
+msgid "dated"
+msgstr "аз"
+
+#: main/templates/main/debt_list.html:20
+msgid "No debts found"
+msgstr "Қарзе ёфт нашуд"
+
+#: main/templates/main/employee_list.html:2
+msgid "TEAM"
+msgstr "ГУРӮҲ"
+
+#: main/templates/main/employee_list.html:2
+msgid "Manage cashier access"
+msgstr "Идоракунии дастрасии хазинадорон"
+
+#: main/templates/main/employee_list.html:2
+msgid "＋ Add cashier"
+msgstr "＋ Илова кардани хазинадор"
+
+#: main/templates/main/employee_list.html:2
+msgid "Search staff"
+msgstr "Ҷустуҷӯи корманд"
+
+#: main/templates/main/employee_list.html:2
+msgid "Staff member"
+msgstr "Корманд"
+
+#: main/templates/main/employee_list.html:2
+msgid "Role"
+msgstr "Нақш"
+
+#: main/templates/main/employee_list.html:2
+msgid "Disabled"
+msgstr "Ғайрифаъол"
+
+#: main/templates/main/employee_list.html:2
+msgid "Change this staff member’s access?"
+msgstr "Дастрасии кормандро тағйир медиҳед?"
+
+#: main/templates/main/employee_list.html:2
+msgid "Disable"
+msgstr "Ғайрифаъол кардан"
+
+#: main/templates/main/employee_list.html:2
+msgid "Enable"
+msgstr "Фаъол кардан"
+
+#: main/templates/main/employee_list.html:2
+msgid "No staff yet"
+msgstr "Ҳоло корманд нест"
+
+#: main/templates/main/error.html:3
+msgid "Home"
+msgstr "Ба саҳифаи асосӣ"
+
+#: main/templates/main/form_page.html:7
+msgid "Edit record"
+msgstr "Таҳрири сабт"
+
+#: main/templates/main/form_page.html:13
+msgid "Balance:"
+msgstr "Бақия:"
+
+#: main/templates/main/form_page.html:13
+msgid "Pay in full"
+msgstr "Пардохти пурра"
+
+#: main/templates/main/form_page.html:16
+msgid "Save"
+msgstr "Сабт кардан"
+
+#: main/templates/main/form_page.html:18
+msgid "This link is invalid or has already been used. Request a new one."
+msgstr ""
+"Ин пайванд беэътибор аст ё аллакай истифода шудааст. Пайванди нав дархост "
+"кунед."
+
+#: main/templates/main/form_page.html:18 main/urls.py:13
+msgid "Reset password"
+msgstr "Барқарор кардани рамз"
+
+#: main/templates/main/home.html:2
+msgid "Debt tracking for businesses"
+msgstr "Баҳисобгирии қарзҳо барои тиҷорат"
+
+#: main/templates/main/home.html:7
+msgid "WORKSPACE"
+msgstr "МУҲИТИ КОРӢ"
+
+#: main/templates/main/home.html:7
+msgid "Shop «"
+msgstr "Мағозаи «"
+
+#: main/templates/main/home.html:8
+msgid "Add customer"
+msgstr "Илова кардани муштарӣ"
+
+#: main/templates/main/home.html:11
+msgid "Total shop customers"
+msgstr "Ҳамаи муштариёни мағоза"
+
+#: main/templates/main/home.html:12
+msgid "Total debt amount"
+msgstr "Маблағи умумии қарзҳо"
+
+#: main/templates/main/home.html:12
+msgid "Active debts:"
+msgstr "Қарзҳои фаъол:"
+
+#: main/templates/main/home.html:13 main/templates/main/home.html:45
+msgid "Received"
+msgstr "Қабул шудааст"
+
+#: main/templates/main/home.html:13
+msgid "of the total amount"
+msgstr "аз маблағи умумӣ"
+
+#: main/templates/main/home.html:14
+msgid "Awaiting payment"
+msgstr "Дар интизори пардохт"
+
+#: main/templates/main/home.html:17
+msgid "Recent activity"
+msgstr "Амалҳои охирин"
+
+#: main/templates/main/home.html:17
+msgid "Debt and payment activity"
+msgstr "Ҳаракати қарзҳо ва пардохтҳо"
+
+#: main/templates/main/home.html:17
+msgid "All activity →"
+msgstr "Ҳамаи амалҳо →"
+
+#: main/templates/main/home.html:28
+msgid "New activity will appear here"
+msgstr "Амалҳои нав дар ин ҷо пайдо мешаванд"
+
+#: main/templates/main/home.html:37
+msgid "QARZ · DEBT TRACKING FOR BUSINESSES"
+msgstr "QARZ · БАҲИСОБГИРИИ ҚАРЗҲО БАРОИ ТИҶОРАТ"
+
+#: main/templates/main/home.html:38
+msgid "Focus on your customers."
+msgstr "Ба муштариён диққат диҳед."
+
+#: main/templates/main/home.html:38
+msgid "Keep track of debts with Qarz."
+msgstr "Қарзҳоро дар Qarz ҳисоб кунед."
+
+#: main/templates/main/home.html:39
+msgid ""
+"Your shop’s customers, debts and payments in one place. Record sales on "
+"credit, accept partial payments and always know the outstanding balance."
+msgstr ""
+"Муштариён, қарзҳо ва пардохтҳои мағозаи шумо — дар як ҷо. Фурӯши насияро "
+"сабт кунед, пардохтҳои қисмиро қабул намоед ва ҳамеша бақияи қарзро донед."
+
+#: main/templates/main/home.html:40 main/templates/main/home.html:76
+msgid "Get started"
+msgstr "Оғози кор"
+
+#: main/templates/main/home.html:40
+msgid "How it works"
+msgstr "Чӣ тавр кор мекунад"
+
+#: main/templates/main/home.html:41
+msgid ""
+"Explore the features without signing up. Create an account when you’re ready "
+"to manage your shop’s records."
+msgstr ""
+"Бо имкониятҳо бе сабти ном шинос шавед. Барои кор бо маълумоти мағоза ҳисоб "
+"лозим мешавад."
+
+#: main/templates/main/home.html:43
+msgid "Debt tracking example"
+msgstr "Намунаи баҳисобгирии қарз"
+
+#: main/templates/main/home.html:44
+msgid "EXAMPLE"
+msgstr "НАМУНАИ ҲИСОБ"
+
+#: main/templates/main/home.html:44
+msgid "Every payment accounted for"
+msgstr "Ҳар пардохт дар ҳисоби худ"
+
+#: main/templates/main/home.html:45
+msgid "Debt amount"
+msgstr "Маблағи қарз"
+
+#: main/templates/main/home.html:45
+msgid "Outstanding balance"
+msgstr "Бақияи қарз"
+
+#: main/templates/main/home.html:46
+msgid ""
+"Example figures. Your balance is calculated automatically from recorded "
+"payments."
+msgstr ""
+"Маълумоти намунавӣ. Бақия аз рӯйи пардохтҳои шумо ба таври худкор ҳисоб "
+"мешавад."
+
+#: main/templates/main/home.html:50
+msgid "FOR EVERYDAY WORK"
+msgstr "БАРОИ КОРИ ҲАРРӮЗА"
+
+#: main/templates/main/home.html:50
+msgid "For businesses that sell on credit"
+msgstr "Барои онҳое, ки насия мефурӯшанд"
+
+#: main/templates/main/home.html:50
+msgid ""
+"For shops and small sales teams that need a clear overview and a reliable "
+"record of customer agreements."
+msgstr ""
+"Барои мағозаҳо ва гурӯҳҳои хурди савдо, ки мехоҳанд вазъи умумиро бинанд ва "
+"таърихи мувофиқаҳоро нигоҳ доранд."
+
+#: main/templates/main/home.html:52
+msgid "For shop owners"
+msgstr "Барои соҳиби мағоза"
+
+#: main/templates/main/home.html:52
+msgid "Keep an eye on total debt, incoming payments and cashier activity."
+msgstr ""
+"Маблағи умумии қарзҳо, пардохтҳои воридшуда ва кори хазинадоронро назорат "
+"кунед."
+
+#: main/templates/main/home.html:53
+msgid "For cashiers"
+msgstr "Барои хазинадор"
+
+#: main/templates/main/home.html:53
+msgid "Find customers quickly, record debts and log every payment."
+msgstr "Муштариро зуд ёбед, қарзро сабт кунед ва ҳар пардохтро қайд намоед."
+
+#: main/templates/main/home.html:54
+msgid "For customers"
+msgstr "Барои муштарӣ"
+
+#: main/templates/main/home.html:54
+msgid ""
+"View your debts, due dates and payment history in your account. Your shop "
+"provides access."
+msgstr ""
+"Қарзҳо, муҳлатҳо ва таърихи пардохтҳои худро дар ҳисоби шахсӣ бинед. "
+"Дастрасиро мағоза медиҳад."
+
+#: main/templates/main/home.html:58
+msgid "FEATURES"
+msgstr "ИМКОНИЯТҲО"
+
+#: main/templates/main/home.html:58
+msgid "Organized records. Clear balances."
+msgstr "Сабтҳои ботартиб. Ҳисобҳои равшан."
+
+#: main/templates/main/home.html:60
+msgid "Customers and contacts"
+msgstr "Муштариён ва маълумоти тамос"
+
+#: main/templates/main/home.html:60
+msgid ""
+"Names, phone numbers, addresses and notes alongside each customer’s debt "
+"history."
+msgstr "Номҳо, телефонҳо, суроғаҳо ва қайдҳо дар баробари таърихи қарзҳо."
+
+#: main/templates/main/home.html:61
+msgid "Due dates and overdue debts"
+msgstr "Муҳлатҳо ва қарзҳои муҳлатгузашта"
+
+#: main/templates/main/home.html:61
+msgid "Set due dates and use filters to find overdue debts."
+msgstr ""
+"Санаи пардохтро нишон диҳед ва қарзҳои муҳлатгузаштаро бо филтрҳо ёбед."
+
+#: main/templates/main/home.html:62
+msgid "Partial payments"
+msgstr "Пардохтҳои қисмӣ"
+
+#: main/templates/main/home.html:62
+msgid ""
+"Accept partial or full payments. The outstanding balance updates "
+"automatically."
+msgstr ""
+"Пардохтро қисман ё пурра қабул кунед. Бақияи қарз ба таври худкор нав "
+"мешавад."
+
+#: main/templates/main/home.html:63
+msgid "Role-based access"
+msgstr "Дастрасӣ аз рӯйи нақш"
+
+#: main/templates/main/home.html:63
+msgid ""
+"Owners manage the shop, cashiers record transactions and customers see only "
+"their own debts."
+msgstr ""
+"Соҳиб мағозаро идора мекунад, хазинадор амалиётро анҷом медиҳад ва муштарӣ "
+"танҳо қарзҳои худро мебинад."
+
+#: main/templates/main/home.html:64
+msgid "History and archive"
+msgstr "Таърих ва бойгонӣ"
+
+#: main/templates/main/home.html:64
+msgid ""
+"Review staff activity and archive customers while keeping their records."
+msgstr ""
+"Амалҳои кормандонро бинед ва муштариёнро бо нигоҳ доштани сабтҳо ба бойгонӣ "
+"гузаронед."
+
+#: main/templates/main/home.html:69
+msgid "HOW IT WORKS"
+msgstr "ТАРЗИ КОР"
+
+#: main/templates/main/home.html:69
+msgid "Three steps to clear records"
+msgstr "Се қадам ба ҳисоби фаҳмо"
+
+#: main/templates/main/home.html:71
+msgid "Set up your shop"
+msgstr "Мағозаро таъсис диҳед"
+
+#: main/templates/main/home.html:71
+msgid "Sign up, enter your shop’s name and add cashiers if needed."
+msgstr ""
+"Сабти ном кунед, номи мағозаро ворид намоед ва дар ҳолати зарурӣ "
+"хазинадоронро илова кунед."
+
+#: main/templates/main/home.html:72
+msgid "Add a customer and a debt"
+msgstr "Муштарӣ ва қарзро илова кунед"
+
+#: main/templates/main/home.html:72
+msgid "Enter contact details, the amount, a description and the due date."
+msgstr "Маълумоти тамос, маблағ, тавсиф ва муҳлати пардохтро сабт кунед."
+
+#: main/templates/main/home.html:73
+msgid "Record payments"
+msgstr "Пардохтҳоро қайд кунед"
+
+#: main/templates/main/home.html:73
+msgid ""
+"Accept payments and track balances in the overview and customer details."
+msgstr ""
+"Пардохтҳоро қабул кунед ва бақияро дар шарҳи умумӣ ва саҳифаи муштарӣ "
+"пайгирӣ намоед."
+
+#: main/templates/main/home.html:76
+msgid "Keep your records close at hand"
+msgstr "Ҳамаи сабтҳо ҳамеша дастрас бошанд"
+
+#: main/templates/main/home.html:76
+msgid "Create an account and start managing your shop’s records."
+msgstr "Ҳисоб кушоед ва баҳисобгирии мағозаи худро оғоз кунед."
+
+#: main/templates/main/home.html:76
+msgid "Already have an account? Log in"
+msgstr "Ҳисоб доред? Ворид шавед"
+
+#: main/templates/main/home.html:77
+msgid "Debt tracking everyone can understand."
+msgstr "Баҳисобгирии қарзҳо, ки барои ҳама фаҳмост."
+
+#: main/templates/main/login.html:5
+msgid "WELCOME BACK"
+msgstr "ХУШ ОМАДЕД"
+
+#: main/templates/main/login.html:5
+msgid "Get back to business"
+msgstr "Коратонро идома диҳед"
+
+#: main/templates/main/login.html:5
+msgid "without the hassle."
+msgstr "бе душвории зиёдатӣ."
+
+#: main/templates/main/login.html:5
+msgid "Log in to see your business’s debts, payments and customers."
+msgstr "Барои дидани қарзҳо, пардохтҳо ва муштариёни тиҷорати худ ворид шавед."
+
+#: main/templates/main/login.html:6
+msgid "Log in to Qarz"
+msgstr "Воридшавӣ ба Qarz"
+
+#: main/templates/main/login.html:6
+msgid "Enter your account details"
+msgstr "Маълумоти ҳисоби худро ворид кунед"
+
+#: main/templates/main/login.html:12
+msgid "Forgot your password?"
+msgstr "Рамзро фаромӯш кардед?"
+
+#: main/templates/main/login.html:12
+msgid "Don’t have an account?"
+msgstr "Ҳисоб надоред?"
+
+#: main/templates/main/password_reset_email.txt:1
+msgid "Qarz password reset."
+msgstr "Барқарор кардани рамзи Qarz."
+
+#: main/templates/main/password_reset_email.txt:2
+msgid "Open this link:"
+msgstr "Ин пайвандро кушоед:"
+
+#: main/templates/main/password_reset_email.txt:3
+msgid "If you did not request a password reset, ignore this email."
+msgstr ""
+"Агар шумо барқарор кардани рамзро дархост накарда бошед, ин паёмро нодида "
+"гиред."
+
+#: main/templates/main/password_reset_subject.txt:1
+msgid "Qarz password reset"
+msgstr "Барқарор кардани рамзи Qarz"
+
+#: main/templates/main/payment_list.html:2
+msgid "FINANCES"
+msgstr "МОЛИЯ"
+
+#: main/templates/main/payment_list.html:2
+msgid "History of all received payments"
+msgstr "Таърихи ҳамаи пардохтҳои қабулшуда"
+
+#: main/templates/main/payment_list.html:2
+msgid "＋ Accept payment"
+msgstr "＋ Қабули пардохт"
+
+#: main/templates/main/payment_list.html:2
+msgid "Search payments by customer"
+msgstr "Ҷустуҷӯи пардохт аз рӯйи муштарӣ"
+
+#: main/templates/main/payment_list.html:2
+msgid "Customer name"
+msgstr "Номи муштарӣ"
+
+#: main/urls.py:14
+msgid "Check your email"
+msgstr "Почтаи худро санҷед"
+
+#: main/urls.py:14
+msgid ""
+"If an account with this email exists, you’ll receive a password reset link."
+msgstr ""
+"Агар бо ин почта ҳисоб мавҷуд бошад, шумо пайванди барқарор кардани рамзро "
+"мегиред."
+
+#: main/urls.py:16
+msgid "Password changed"
+msgstr "Рамз иваз шуд"
+
+#: main/urls.py:16
+msgid "You can now log in with your new password."
+msgstr "Акнун метавонед бо рамзи нав ворид шавед."
+
+#: main/views.py:136
+msgid "Register your shop"
+msgstr "Сабти номи мағоза"
+
+#: main/views.py:313
+msgid "This debt cannot be cancelled."
+msgstr "Ин қарзро бекор кардан мумкин нест."
+
+#: main/views.py:364
+msgid ""
+"The payment was not saved because the database is busy. Refresh the balance "
+"and try again."
+msgstr ""
+"Пардохт сабт нашуд: пойгоҳи додаҳо банд аст. Бақияро нав кунед ва боз кӯшиш "
+"намоед."
+
+#: main/views.py:391
+msgid "New staff member"
+msgstr "Корманди нав"
+
+#: main/views.py:456
+msgid "Customer access"
+msgstr "Дастрасии муштарӣ"
+
+#: main/views.py:470
+msgid "Customer account created."
+msgstr "Ҳисоби муштарӣ сохта шуд."

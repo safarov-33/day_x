@@ -1,0 +1,38 @@
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Activity log" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "HISTORY" %}</p>
+                <h1>{% translate "Activity log" %}</h1>
+            </div>
+        </div>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% translate "Action" %}</th>
+                        <th>{% translate "User" %}</th>
+                        <th>{% translate "Date" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in actions %}
+                        <tr>
+                            <td>{{ item.display_action }}</td>
+                            <td>{{ item.user.username|default:_("System") }}</td>
+                            <td>{{ item.created_at|date:"d.m.Y, H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3">{% translate "No activity yet" %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'main/_pagination.html' %}
+    </section>
+{% endblock %}

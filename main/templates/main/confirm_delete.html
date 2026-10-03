@@ -1,0 +1,17 @@
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Customer archive" %}{% endblock %}
+{% block content %}
+    <section class="form-page">
+        <a class="back-link" href="{% url 'customer_detail' object.pk %}">{% translate "← Back" %}</a>
+        <div class="auth-card">
+            <h1>{% if object.is_archived %}{% translate "Restore this customer?" %}{% else %}{% translate "Archive this customer?" %}{% endif %}</h1>
+            <p>«{{ object.name }}{% translate "». All debts and payments will be kept. You can restore this customer later." %}</p>
+            <form class="confirm-actions" method="post">
+                {% csrf_token %}
+                <a class="button secondary" href="{% url 'customer_detail' object.pk %}">{% translate "Back" %}</a>
+                <button class="button" type="submit">{% translate "Confirm" %}</button>
+            </form>
+        </div>
+    </section>
+{% endblock %}

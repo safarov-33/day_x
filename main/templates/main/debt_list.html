@@ -1,0 +1,68 @@
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Debts" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "RECORDS" %}</p>
+                <h1>{% if user.role == 'client' %}{% translate "My debts" %}{% else %}{% translate "Debts" %}{% endif %}</h1>
+                <p>{% translate "Amounts, due dates and payment history" %}</p>
+            </div>
+            {% if user.role != 'client' %}
+                <a class="button" href="{% url 'debt_create' %}">{% translate "＋ Add debt" %}</a>
+            {% endif %}
+        </div>
+        {% if user.role != 'client' %}
+            <form class="filter-bar" method="get">
+                <label>{% translate "Customer" %}<input name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Search by name' %}"></label>
+                <label>
+                    {% translate "Status" %}
+                    <select name="status">
+                        <option value="">{% translate "All" %}</option>
+                        <option value="active"{% if request.GET.status == 'active' %} selected{% endif %}>{% translate "Active" %}</option>
+                        <option value="overdue"{% if request.GET.status == 'overdue' %} selected{% endif %}>{% translate "Overdue" %}</option>
+                        <option value="paid"{% if request.GET.status == 'paid' %} selected{% endif %}>{% translate "Paid" %}</option>
+                        <option value="cancelled"{% if request.GET.status == 'cancelled' %} selected{% endif %}>{% translate "Cancelled" %}</option>
+                    </select>
+                </label>
+                <label>{% translate "Due from" %}<input type="date" name="from" value="{{ request.GET.from }}"></label>
+                <label>{% translate "Due until" %}<input type="date" name="to" value="{{ request.GET.to }}"></label>
+                <button class="button secondary">{% translate "Search" %}</button>
+                <a class="back-link" href="{% url 'debt_list' %}">{% translate "Reset" %}</a>
+            </form>
+        {% endif %}
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% translate "Customer" %}</th>
+                        <th>{% translate "Amount" %}</th>
+                        <th>{% translate "Balance" %}</th>
+                        <th>{% translate "Due date" %}</th>
+                        <th>{% translate "Status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for debt in debts %}
+                        <tr>
+                            <td>
+                                <a href="{% if user.role == 'client' %}{% url 'client_debt_detail' debt.pk %}{% else %}{% url 'debt_detail' debt.pk %}{% endif %}">{{ debt.customer.name }}</a>
+                                <small class="cell-note">{% translate "dated" %} {{ debt.created_at|date:"d.m.Y" }}</small>
+                            </td>
+                            <td>{{ debt.amount|floatformat:2 }} TJS</td>
+                            <td>{{ debt.remaining_amount|floatformat:2 }} TJS</td>
+                            <td{% if debt.is_overdue %} class="overdue"{% endif %}>{{ debt.due_date|date:"d.m.Y"|default:_("Not set") }}{% if debt.is_overdue %}<small class="cell-note">{% translate "Overdue" %}</small>{% endif %}</td>
+                            <td><span class="status status-{{ debt.status }}">{{ debt.get_status_display }}</span></td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td class="empty-row" colspan="5">{% translate "No debts found" %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'main/_pagination.html' %}
+    </section>
+{% endblock %}

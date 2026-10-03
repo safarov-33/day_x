@@ -1,0 +1,10 @@
+{% load i18n %}
+{% csrf_token %}
+{% if form.non_field_errors %}
+    <div class="form-alert">
+        {{ form.non_field_errors }}
+    </div>
+{% endif %}
+{% for field in form %}
+    {% include 'main/_field.html' %}
+{% endfor %}

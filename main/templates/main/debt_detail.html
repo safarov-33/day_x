@@ -1,0 +1,80 @@
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Debt" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <a class="back-link" href="{% if user.role == 'client' %}{% url 'client_debt_list' %}{% else %}{% url 'debt_list' %}{% endif %}">{% translate "← Debts" %}</a>
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "DEBT #" %}{{ debt.pk }}</p>
+                <h1>{{ debt.customer.name }}</h1>
+                <p>{{ debt.description|default:_("No description") }}</p>
+                <div class="debt-meta">
+                    <span>{% translate "Created" %} {{ debt.created_at|date:"d.m.Y" }}</span>
+                    <span>{% translate "Due:" %} {% if debt.due_date %}<strong>{{ debt.due_date|date:"d.m.Y" }}</strong>{% else %}{% translate "not set" %}{% endif %}</span>
+                </div>
+            </div>
+            {% if user.role != 'client' %}
+                <div class="dashboard-actions">
+                    {% if debt.status != 'cancelled' %}
+                        <a class="button secondary" href="{% url 'debt_update' debt.pk %}">{% translate "Edit" %}</a>
+                    {% endif %}
+                    {% if debt.remaining_amount > 0 and debt.status != 'cancelled' %}
+                        <a class="button" href="{% url 'payment_create' %}?debt={{ debt.pk }}">{% translate "Accept payment" %}</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+        {% if debt.is_overdue %}
+            <p class="message overdue">{% translate "This debt is overdue" %}</p>
+        {% endif %}
+        <p><span class="status status-{{ debt.status }}">{{ debt.get_status_display }}</span></p>
+        <div class="stats-grid three">
+            <article class="stat-card">
+                <span>{% translate "Amount" %}</span>
+                <strong>{{ debt.amount }} <i>TJS</i></strong>
+            </article>
+            <article class="stat-card">
+                <span>{% translate "Paid" %}</span>
+                <strong>{{ debt.paid_amount }} <i>TJS</i></strong>
+            </article>
+            <article class="stat-card featured">
+                <span>{% translate "Balance" %}</span>
+                <strong>{{ debt.remaining_amount }} <i>TJS</i></strong>
+            </article>
+        </div>
+        <section class="table-section">
+            <h2>{% translate "Payment history" %}</h2>
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{% translate "Amount" %}</th>
+                            <th>{% translate "Accepted by" %}</th>
+                            <th>{% translate "Date" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in debt.payments.all %}
+                            <tr>
+                                <td>{{ payment.amount }} TJS</td>
+                                <td>{{ payment.accepted_by.username }}</td>
+                                <td>{{ payment.created_at|date:"d.m.Y, H:i" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3">{% translate "No payments yet" %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% if user.role != 'client' and not debt.payments.exists and debt.status != 'cancelled' %}
+            <form class="danger-zone" action="{% url 'debt_cancel' debt.pk %}" method="post">
+                {% csrf_token %}
+                <button type="submit">{% translate "Cancel debt" %}</button>
+            </form>
+        {% endif %}
+    </section>
+{% endblock %}

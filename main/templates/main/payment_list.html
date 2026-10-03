@@ -1,0 +1,46 @@
+{% extends 'main/base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Payments" %}{% endblock %}
+{% block content %}
+    <section class="content-page">
+        <div class="page-heading">
+            <div>
+                <p class="overline">{% translate "FINANCES" %}</p>
+                <h1>{% translate "Payments" %}</h1>
+                <p>{% translate "History of all received payments" %}</p>
+            </div>
+            <a class="button" href="{% url 'payment_create' %}">{% translate "＋ Accept payment" %}</a>
+        </div>
+        <form class="search-form">
+            <input name="q" aria-label="{% translate 'Search payments by customer' %}" placeholder="{% translate 'Customer name' %}" value="{{ request.GET.q }}">
+            <button class="button secondary">{% translate "Search" %}</button>
+        </form>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% translate "Customer" %}</th>
+                        <th>{% translate "Amount" %}</th>
+                        <th>{% translate "Accepted by" %}</th>
+                        <th>{% translate "Date" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                        <tr>
+                            <td><a href="{% url 'debt_detail' payment.debt.pk %}">{{ payment.debt.customer.name }}</a></td>
+                            <td>{{ payment.amount }} TJS</td>
+                            <td>{{ payment.accepted_by.username }}</td>
+                            <td>{{ payment.created_at|date:"d.m.Y, H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">{% translate "No payments yet" %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'main/_pagination.html' %}
+    </section>
+{% endblock %}
